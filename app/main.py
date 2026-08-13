@@ -7,8 +7,7 @@ from fastapi.responses import FileResponse
 from app.api.routes import router as api_router
 from app.api.websocket import router as websocket_router
 
-from app.services.camera import camera_service 
-camera_service = CameraService()
+from app.services.container import camera_service 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BASE_DIR / "frontend"

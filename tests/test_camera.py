@@ -1,4 +1,3 @@
-```python
 from pathlib import Path
 
 import pytest
@@ -37,5 +36,4 @@ def test_photo_requires_running_camera(
         camera.save_photo(
             tmp_path / "photo.jpg"
         )
-```
 
