@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Fotobox</title>
+
+    <link
+        rel="stylesheet"
+        href="/static/css/app.css"
+    >
+</head>
+
+<body>
+
+<main id="app">
+
+    <header>
+        <h1>Fotobox</h1>
+        <div id="connection-status">
+            Verbindung wird hergestellt …
+        </div>
+    </header>
+
+    <section id="start-screen">
+
+   <div id="live-view">
+       <img
+           id="camera-stream"
+           src="/api/camera/stream"
+           alt="Kamera-Livebild"
+       >
+   </div>
+        <button
+            id="start-button"
+            type="button"
+            disabled
+        >
+            Start
+        </button>
+
+    </section>
+
+    <section
+        id="countdown-screen"
+        class="hidden"
+    >
+        <div id="countdown">
+            5
+        </div>
+    </section>
+
+</main>
+
+<script src="/static/js/app.js"></script>
+
+</body>
+</html>

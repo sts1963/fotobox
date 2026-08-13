@@ -1,0 +1,32 @@
+# Fotobox configuration
+
+server:
+host: "0.0.0.0"
+port: 8000
+
+camera:
+device: "/dev/video0"
+width: 1280
+height: 720
+fps: 30
+jpeg_quality: 80 
+
+session:
+countdown_seconds: 5
+photo_count: 3
+interval_seconds: 3
+
+collage:
+layout: "strip"
+logo: "assets/logo.png"
+
+printing:
+printer: ""
+
+storage:
+session_directory: "data/sessions"
+retention_days: 7
+
+processing:
+mode: "normal"
+
