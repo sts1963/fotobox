@@ -3,6 +3,7 @@ uvicorn[standard]
 PyYAML
 pytest
 httpx
+Pillow=12.3.0
 pytest-asyncio
 opencv-python-headless==5.0.0.93
 httpx2

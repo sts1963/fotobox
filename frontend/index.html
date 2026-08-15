@@ -1,17 +1,34 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    >
+
+    <meta
+        name="apple-mobile-web-app-capable"
+        content="yes"
+    >
+
+    <meta
+        name="apple-mobile-web-app-status-bar-style"
+        content="black-translucent"
+    >
+
+    <meta
+        name="apple-mobile-web-app-title"
+        content="Fotobox"
     >
 
     <title>Fotobox</title>
 
     <link
         rel="stylesheet"
-        href="/static/css/app.css?v=5"
+        href="/static/css/app.css?v=6"
     >
 </head>
 
@@ -21,20 +38,26 @@
 
     <header>
         <h1>Fotobox</h1>
+
         <div id="connection-status">
             Verbindung wird hergestellt …
         </div>
     </header>
 
+
     <section id="start-screen">
 
-   <div class="camera-container">
-       <img
-           id="camera-stream"
-           src="/api/camera/stream"
-           alt="Kamera-Livebild"
-       >
-   </div>
+        <div
+            id="live-view"
+            class="camera-container"
+        >
+            <img
+                id="camera-stream"
+                src="/api/camera/stream"
+                alt="Livebild der Fotobox-Kamera"
+            >
+        </div>
+
         <button
             id="start-button"
             type="button"
@@ -45,6 +68,7 @@
 
     </section>
 
+
     <section
         id="countdown-screen"
         class="hidden"
@@ -54,53 +78,100 @@
         </div>
     </section>
 
-<section
-    id="capture-screen"
-    class="hidden"
->
-    <div class="session-message">
-        <h2>Aufnahme läuft</h2>
 
-        <p id="capture-status">
-            Foto 1 von 3
-        </p>
-    </div>
-</section>
+    <section
+        id="capture-screen"
+        class="hidden"
+    >
+        <div class="session-message">
 
-<section
-    id="processing-screen"
-    class="hidden"
->
-    <div class="session-message">
-        <h2>Fotos aufgenommen</h2>
+            <h2>Aufnahme läuft</h2>
 
-        <p>
-            Die Bilder werden verarbeitet …
-        </p>
-    </div>
-</section>
+            <p id="capture-status">
+                Foto 1 von 3
+            </p>
 
-<section
-    id="error-screen"
-    class="hidden"
->
-    <div class="session-message">
-        <h2>Es ist ein Fehler aufgetreten</h2>
+        </div>
+    </section>
 
-        <p id="error-message"></p>
 
-        <button
-            id="restart-button"
-            type="button"
-        >
-            Neu starten
-        </button>
-    </div>
-</section>
+    <section
+        id="processing-screen"
+        class="hidden"
+    >
+        <div class="session-message">
+
+            <h2>Fotos aufgenommen</h2>
+
+            <p>
+                Die Collage wird erstellt …
+            </p>
+
+        </div>
+    </section>
+
+
+    <section
+        id="preview-screen"
+        class="hidden"
+    >
+        <div class="preview-container">
+
+            <img
+                id="collage-preview"
+                alt="Fertige Fotobox-Collage"
+            >
+
+        </div>
+
+        <div class="preview-actions">
+
+            <button
+                id="print-button"
+                type="button"
+                disabled
+            >
+                Drucken
+            </button>
+
+            <button
+                id="preview-restart-button"
+                type="button"
+            >
+                Neu starten
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <section
+        id="error-screen"
+        class="hidden"
+    >
+        <div class="session-message">
+
+            <h2>
+                Es ist ein Fehler aufgetreten
+            </h2>
+
+            <p id="error-message"></p>
+
+            <button
+                id="restart-button"
+                type="button"
+            >
+                Neu starten
+            </button>
+
+        </div>
+    </section>
 
 </main>
 
-<script src="/static/js/app.js?v=5"></script>
+<script src="/static/js/app.js?v=6"></script>
 
 </body>
 </html>
+

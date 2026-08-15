@@ -6,6 +6,7 @@ from pathlib import Path
 from app.core.events import EventBus
 from app.models.state import SessionCommand
 from app.services.camera import CameraError, CameraService
+from app.services.collage import CollageError, CollageGenerator
 from app.services.countdown import CountdownService
 from app.services.session_manager import (
     InvalidTransitionError,
@@ -24,17 +25,22 @@ class PhotoSessionService:
         self,
         session_manager: SessionManager,
         camera_service: CameraService,
+        collage_generator: CollageGenerator,
         event_bus: EventBus,
         session_root: Path = Path("data/sessions"),
+        logo_path: Path = Path("assets/logo.png"),
         countdown_seconds: int = 5,
         photo_count: int = 3,
         interval_seconds: float = 3.0,
     ) -> None:
         self.session_manager = session_manager
         self.camera_service = camera_service
+        self.collage_generator = collage_generator
         self.event_bus = event_bus
 
         self.session_root = session_root
+        self.logo_path = logo_path
+
         self.countdown_seconds = countdown_seconds
         self.photo_count = photo_count
         self.interval_seconds = interval_seconds
@@ -68,10 +74,10 @@ class PhotoSessionService:
                 self.session_manager.handle(
                     SessionCommand.START_SESSION
                 )
-            except InvalidTransitionError:
+            except InvalidTransitionError as exc:
                 raise PhotoSessionBusyError(
                     "The photobooth is not ready for a new session."
-                )
+                ) from exc
 
             await self._publish_state()
 
@@ -110,7 +116,7 @@ class PhotoSessionService:
             await task
 
     async def _run(self) -> None:
-        """Run countdown and photo sequence."""
+        """Run countdown, photo sequence and collage generation."""
 
         countdown: CountdownService | None = None
 
@@ -127,6 +133,7 @@ class PhotoSessionService:
                 await asyncio.sleep(0.05)
 
             await self._capture_photos()
+            await self._create_collage()
 
         except asyncio.CancelledError:
             if countdown is not None:
@@ -136,6 +143,7 @@ class PhotoSessionService:
 
         except (
             CameraError,
+            CollageError,
             InvalidTransitionError,
         ) as exc:
             self.session_manager.set_error(str(exc))
@@ -212,6 +220,46 @@ class PhotoSessionService:
 
         self.session_manager.handle(
             SessionCommand.ALL_PHOTOS_CAPTURED
+        )
+
+        await self._publish_state()
+
+    async def _create_collage(self) -> None:
+        """Generate the 2x2 collage for the current session."""
+
+        session = self.session_manager.session
+
+        photo_paths = [
+            Path(filename)
+            for filename in session.photos
+        ]
+
+        if len(photo_paths) != 3:
+            raise CollageError(
+                "Exactly three captured photos are required."
+            )
+
+        session_directory = (
+            self.session_root / session.id
+        )
+
+        output_path = (
+            session_directory / "collage.jpg"
+        )
+
+        result = await asyncio.to_thread(
+            self.collage_generator.create_grid_2x2,
+            photo_paths,
+            output_path,
+            self.logo_path,
+        )
+
+        self.session_manager.set_collage(
+            str(result)
+        )
+
+        self.session_manager.handle(
+            SessionCommand.PROCESSING_FINISHED
         )
 
         await self._publish_state()

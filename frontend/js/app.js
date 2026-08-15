@@ -1,21 +1,3 @@
-const captureScreen =
-    document.getElementById("capture-screen");
-
-const processingScreen =
-    document.getElementById("processing-screen");
-
-const errorScreen =
-    document.getElementById("error-screen");
-
-const captureStatus =
-    document.getElementById("capture-status");
-
-const errorMessage =
-    document.getElementById("error-message");
-
-const restartButton =
-    document.getElementById("restart-button");
-
 const connectionStatus =
     document.getElementById("connection-status");
 
@@ -31,16 +13,39 @@ const countdownScreen =
 const countdownElement =
     document.getElementById("countdown");
 
+const captureScreen =
+    document.getElementById("capture-screen");
+
+const processingScreen =
+    document.getElementById("processing-screen");
+
+const previewScreen =
+    document.getElementById("preview-screen");
+
+const collagePreview =
+    document.getElementById("collage-preview");
+
+const captureStatus =
+    document.getElementById("capture-status");
+
+const errorScreen =
+    document.getElementById("error-screen");
+
+const errorMessage =
+    document.getElementById("error-message");
+
+const restartButton =
+    document.getElementById("restart-button");
+
+const previewRestartButton =
+    document.getElementById("preview-restart-button");
+
+const printButton =
+    document.getElementById("print-button");
+
 
 let socket = null;
 
-function hideSessionScreens() {
-    startScreen.classList.add("hidden");
-    countdownScreen.classList.add("hidden");
-    captureScreen.classList.add("hidden");
-    processingScreen.classList.add("hidden");
-    errorScreen.classList.add("hidden");
-}
 
 function setConnected(connected) {
     if (connected) {
@@ -52,22 +57,58 @@ function setConnected(connected) {
 }
 
 
+function hideSessionScreens() {
+    startScreen.classList.add("hidden");
+    countdownScreen.classList.add("hidden");
+    captureScreen.classList.add("hidden");
+    processingScreen.classList.add("hidden");
+    previewScreen.classList.add("hidden");
+    errorScreen.classList.add("hidden");
+}
+
+
+function sendCommand(type) {
+    if (
+        !socket ||
+        socket.readyState !== WebSocket.OPEN
+    ) {
+        return;
+    }
+
+    socket.send(
+        JSON.stringify({
+            type: type,
+        })
+    );
+}
+
+
 function updateState(message) {
     const state = message.state;
 
-    console.log("Fotobox state:", state);
+    console.log(
+        "Fotobox state:",
+        state
+    );
 
     hideSessionScreens();
 
     switch (state) {
 
         case "start":
-            startScreen.classList.remove("hidden");
+            startScreen.classList.remove(
+                "hidden"
+            );
+
             startButton.disabled = false;
             break;
 
+
         case "countdown":
-            countdownScreen.classList.remove("hidden");
+            countdownScreen.classList.remove(
+                "hidden"
+            );
+
             startButton.disabled = true;
 
             if (message.countdown !== null) {
@@ -77,8 +118,12 @@ function updateState(message) {
 
             break;
 
+
         case "capturing": {
-            captureScreen.classList.remove("hidden");
+            captureScreen.classList.remove(
+                "hidden"
+            );
+
             startButton.disabled = true;
 
             const captured =
@@ -87,7 +132,10 @@ function updateState(message) {
                     : 0;
 
             const nextPhoto =
-                Math.min(captured + 1, 3);
+                Math.min(
+                    captured + 1,
+                    3
+                );
 
             captureStatus.textContent =
                 `Foto ${nextPhoto} von 3`;
@@ -95,33 +143,63 @@ function updateState(message) {
             break;
         }
 
+
         case "processing":
-            processingScreen.classList.remove("hidden");
+            processingScreen.classList.remove(
+                "hidden"
+            );
+
             startButton.disabled = true;
             break;
 
-        case "preview":
+
+        case "preview": {
+            previewScreen.classList.remove(
+                "hidden"
+            );
+
             startButton.disabled = true;
+
+            const sessionId =
+                encodeURIComponent(
+                    message.session_id
+                );
+
+            /*
+             * The session ID already makes the URL unique.
+             * The timestamp additionally prevents Safari from
+             * showing an old cached preview during development.
+             */
+            collagePreview.src =
+                `/api/session/${sessionId}/collage`
+                + `?v=${Date.now()}`;
+
             break;
+        }
+
 
         case "printing":
             startButton.disabled = true;
             break;
 
+
         case "error":
-            errorScreen.classList.remove("hidden");
+            errorScreen.classList.remove(
+                "hidden"
+            );
+
             startButton.disabled = true;
 
             errorMessage.textContent =
-                message.error ??
-                "Unbekannter Fehler";
+                message.error
+                ?? "Unbekannter Fehler";
 
             break;
     }
 }
 
-function connectWebSocket() {
 
+function connectWebSocket() {
     const protocol =
         window.location.protocol === "https:"
             ? "wss:"
@@ -133,82 +211,97 @@ function connectWebSocket() {
     socket = new WebSocket(url);
 
 
-    socket.addEventListener("open", () => {
-        setConnected(true);
-    });
-
-
-    socket.addEventListener("message", (event) => {
-
-        const message =
-            JSON.parse(event.data);
-
-        switch (message.type) {
-
-            case "state":
-                updateState(message);
-                break;
-
-            case "error":
-                console.error(
-                    message.message
-                );
-                break;
+    socket.addEventListener(
+        "open",
+        () => {
+            setConnected(true);
         }
-    });
+    );
 
 
-    socket.addEventListener("close", () => {
+    socket.addEventListener(
+        "message",
+        (event) => {
+            const message =
+                JSON.parse(event.data);
 
-        setConnected(false);
+            switch (message.type) {
 
-        startButton.disabled = true;
+                case "state":
+                    updateState(message);
+                    break;
 
-        window.setTimeout(
-            connectWebSocket,
-            2000
-        );
-    });
+                case "error":
+                    console.error(
+                        message.message
+                    );
+                    break;
+            }
+        }
+    );
 
 
-    socket.addEventListener("error", () => {
-        setConnected(false);
-    });
+    socket.addEventListener(
+        "close",
+        () => {
+            setConnected(false);
+
+            startButton.disabled = true;
+
+            window.setTimeout(
+                connectWebSocket,
+                2000
+            );
+        }
+    );
+
+
+    socket.addEventListener(
+        "error",
+        () => {
+            setConnected(false);
+        }
+    );
 }
 
 
-startButton.addEventListener("click", () => {
-
-    if (
-        !socket ||
-        socket.readyState !== WebSocket.OPEN
-    ) {
-        return;
-    }
-
-    socket.send(
-        JSON.stringify({
-            type: "start_session",
-        })
-    );
-});
-
-restartButton.addEventListener(
+startButton.addEventListener(
     "click",
     () => {
-        if (
-            !socket ||
-            socket.readyState !== WebSocket.OPEN
-        ) {
-            return;
-        }
-
-        socket.send(
-            JSON.stringify({
-                type: "restart",
-            })
+        sendCommand(
+            "start_session"
         );
     }
 );
 
+
+restartButton.addEventListener(
+    "click",
+    () => {
+        sendCommand(
+            "restart"
+        );
+    }
+);
+
+
+previewRestartButton.addEventListener(
+    "click",
+    () => {
+        sendCommand(
+            "restart"
+        );
+    }
+);
+
+
+/*
+ * Printing is intentionally not implemented yet.
+ * The button remains disabled until the CUPS/SELPHY
+ * integration is available.
+ */
+printButton.disabled = true;
+
+
 connectWebSocket();
+
