@@ -1,147 +1,77 @@
-import asyncio
+from fastapi import (
+    APIRouter,
+    WebSocket,
+    WebSocketDisconnect,
+)
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-
-from app.models.state import SessionCommand
-from app.services.countdown import CountdownService
-from app.services.session_manager import (
-    InvalidTransitionError,
-    SessionManager,
+from app.services.container import (
+    event_bus,
+    photo_session_service,
+    session_manager,
+)
+from app.services.photo_session import (
+    PhotoSessionBusyError,
 )
 
 
 router = APIRouter()
 
-session_manager = SessionManager()
-
-
-async def send_state(websocket: WebSocket) -> None:
-    """Send the current session state to the client."""
-
-    session = session_manager.session
-
-    await websocket.send_json(
-        {
-            "type": "state",
-            "state": session.state.value,
-            "session_id": session.id,
-            "photos": session.photos,
-            "collage": session.collage,
-            "error": session.error,
-            "countdown": session.countdown_remaining,
-        }
-    )
-
-
-async def countdown_tick(
-    websocket: WebSocket,
-    remaining: int,
-) -> None:
-    """Handle a countdown tick."""
-
-    session_manager.set_countdown(remaining)
-
-    try:
-        await send_state(websocket)
-    except Exception:
-        # The client may have disconnected.
-        pass
-
-
-async def countdown_finished(
-    websocket: WebSocket,
-) -> None:
-    """Handle completion of the countdown."""
-
-    session_manager.handle(
-        SessionCommand.COUNTDOWN_FINISHED
-    )
-
-    try:
-        await send_state(websocket)
-    except Exception:
-        pass
-
-
-async def run_countdown(websocket: WebSocket) -> None:
-    """Run the session countdown."""
-
-    countdown = CountdownService(
-        seconds=5,
-        on_tick=lambda remaining: countdown_tick(
-            websocket,
-            remaining,
-        ),
-        on_finished=lambda: countdown_finished(
-            websocket,
-        ),
-    )
-
-    try:
-        await countdown.start()
-
-        # Keep the task alive until the countdown has finished.
-        while countdown.running:
-            await asyncio.sleep(0.05)
-
-    except asyncio.CancelledError:
-        await countdown.cancel()
-        raise
-
 
 @router.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket) -> None:
-    """Handle the frontend WebSocket connection."""
+async def websocket_endpoint(
+    websocket: WebSocket,
+) -> None:
+    """Handle one frontend WebSocket connection."""
 
     await websocket.accept()
 
-    await send_state(websocket)
+    async def send_event(
+        event: dict,
+    ) -> None:
+        await websocket.send_json(event)
 
-    countdown_task: asyncio.Task[None] | None = None
+    event_bus.subscribe(send_event)
 
     try:
+        # Synchronize a newly connected/reloaded frontend.
+        await websocket.send_json(
+            session_manager.snapshot()
+        )
+
         while True:
             message = await websocket.receive_json()
 
-            command_name = message.get("type")
+            command = message.get("type")
 
-            try:
-                command = SessionCommand(command_name)
+            if command == "start_session":
+                try:
+                    await photo_session_service.start()
 
-            except ValueError:
-                await websocket.send_json(
-                    {
-                        "type": "error",
-                        "message": f"Unknown command: {command_name}",
-                    }
-                )
-                continue
-
-            try:
-                new_state = session_manager.handle(command)
-
-            except InvalidTransitionError as exc:
-                await websocket.send_json(
-                    {
-                        "type": "error",
-                        "message": str(exc),
-                    }
-                )
-                continue
-
-            await send_state(websocket)
-
-            if new_state.value == "countdown":
-                if countdown_task is None or countdown_task.done():
-                    countdown_task = asyncio.create_task(
-                        run_countdown(websocket)
+                except PhotoSessionBusyError as exc:
+                    await websocket.send_json(
+                        {
+                            "type": "error",
+                            "message": str(exc),
+                        }
                     )
 
-    except WebSocketDisconnect:
-        if countdown_task is not None:
-            countdown_task.cancel()
+            elif command == "restart":
+                await photo_session_service.restart()
 
-            try:
-                await countdown_task
-            except asyncio.CancelledError:
-                pass
+            else:
+                await websocket.send_json(
+                    {
+                        "type": "error",
+                        "message": (
+                            f"Unknown command: {command}"
+                        ),
+                    }
+                )
+
+    except WebSocketDisconnect:
+        pass
+
+    finally:
+        event_bus.unsubscribe(send_event)
+
+

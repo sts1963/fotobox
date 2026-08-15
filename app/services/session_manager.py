@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any
 from uuid import uuid4
 
 from app.models.state import FotoboxState, SessionCommand
@@ -12,9 +13,11 @@ class Session:
     id: str = field(default_factory=lambda: str(uuid4()))
     state: FotoboxState = FotoboxState.START
     created_at: datetime = field(default_factory=datetime.now)
+
     photos: list[str] = field(default_factory=list)
     collage: str | None = None
     error: str | None = None
+
     countdown_remaining: int | None = None
 
 
@@ -64,8 +67,10 @@ class SessionManager:
 
         if command == SessionCommand.ERROR:
             self.session.state = FotoboxState.ERROR
+            self.session.countdown_remaining = None
             return self.session.state
 
+        # Restart is intentionally possible from every state.
         if command == SessionCommand.RESTART:
             self.session = Session()
             return self.session.state
@@ -86,7 +91,7 @@ class SessionManager:
         return self.session.state
 
     def set_countdown(self, remaining: int) -> None:
-        """Update the remaining countdown time."""
+        """Update the current countdown value."""
 
         if self.state != FotoboxState.COUNTDOWN:
             raise InvalidTransitionError(
@@ -119,5 +124,22 @@ class SessionManager:
         """Put the session into the error state."""
 
         self.session.error = message
-        self.session.state = FotoboxState.ERROR
         self.session.countdown_remaining = None
+        self.session.state = FotoboxState.ERROR
+
+    def snapshot(self) -> dict[str, Any]:
+        """Return the complete frontend-visible session state."""
+
+        session = self.session
+
+        return {
+            "type": "state",
+            "state": session.state.value,
+            "session_id": session.id,
+            "created_at": session.created_at.isoformat(),
+            "countdown": session.countdown_remaining,
+            "photos": list(session.photos),
+            "collage": session.collage,
+            "error": session.error,
+        }
+

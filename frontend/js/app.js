@@ -1,3 +1,21 @@
+const captureScreen =
+    document.getElementById("capture-screen");
+
+const processingScreen =
+    document.getElementById("processing-screen");
+
+const errorScreen =
+    document.getElementById("error-screen");
+
+const captureStatus =
+    document.getElementById("capture-status");
+
+const errorMessage =
+    document.getElementById("error-message");
+
+const restartButton =
+    document.getElementById("restart-button");
+
 const connectionStatus =
     document.getElementById("connection-status");
 
@@ -16,6 +34,13 @@ const countdownElement =
 
 let socket = null;
 
+function hideSessionScreens() {
+    startScreen.classList.add("hidden");
+    countdownScreen.classList.add("hidden");
+    captureScreen.classList.add("hidden");
+    processingScreen.classList.add("hidden");
+    errorScreen.classList.add("hidden");
+}
 
 function setConnected(connected) {
     if (connected) {
@@ -32,20 +57,17 @@ function updateState(message) {
 
     console.log("Fotobox state:", state);
 
+    hideSessionScreens();
+
     switch (state) {
 
         case "start":
             startScreen.classList.remove("hidden");
-            countdownScreen.classList.add("hidden");
-
             startButton.disabled = false;
             break;
 
-
         case "countdown":
-            startScreen.classList.add("hidden");
             countdownScreen.classList.remove("hidden");
-
             startButton.disabled = true;
 
             if (message.countdown !== null) {
@@ -55,42 +77,48 @@ function updateState(message) {
 
             break;
 
-
-        case "capturing":
-            startScreen.classList.add("hidden");
-            countdownScreen.classList.add("hidden");
-
+        case "capturing": {
+            captureScreen.classList.remove("hidden");
             startButton.disabled = true;
-            break;
 
+            const captured =
+                Array.isArray(message.photos)
+                    ? message.photos.length
+                    : 0;
+
+            const nextPhoto =
+                Math.min(captured + 1, 3);
+
+            captureStatus.textContent =
+                `Foto ${nextPhoto} von 3`;
+
+            break;
+        }
 
         case "processing":
+            processingScreen.classList.remove("hidden");
             startButton.disabled = true;
             break;
 
-
         case "preview":
-            startButton.disabled = false;
+            startButton.disabled = true;
             break;
-
 
         case "printing":
             startButton.disabled = true;
             break;
 
-
         case "error":
-            startButton.disabled = false;
+            errorScreen.classList.remove("hidden");
+            startButton.disabled = true;
 
-            console.error(
-                "Fotobox error:",
-                message.error
-            );
+            errorMessage.textContent =
+                message.error ??
+                "Unbekannter Fehler";
 
             break;
     }
 }
-
 
 function connectWebSocket() {
 
@@ -165,5 +193,22 @@ startButton.addEventListener("click", () => {
     );
 });
 
+restartButton.addEventListener(
+    "click",
+    () => {
+        if (
+            !socket ||
+            socket.readyState !== WebSocket.OPEN
+        ) {
+            return;
+        }
+
+        socket.send(
+            JSON.stringify({
+                type: "restart",
+            })
+        );
+    }
+);
 
 connectWebSocket();

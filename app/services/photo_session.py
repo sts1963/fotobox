@@ -1,0 +1,225 @@
+from __future__ import annotations
+
+import asyncio
+from pathlib import Path
+
+from app.core.events import EventBus
+from app.models.state import SessionCommand
+from app.services.camera import CameraError, CameraService
+from app.services.countdown import CountdownService
+from app.services.session_manager import (
+    InvalidTransitionError,
+    SessionManager,
+)
+
+
+class PhotoSessionBusyError(Exception):
+    """Raised when a photo session is already running."""
+
+
+class PhotoSessionService:
+    """Orchestrate one complete photo capture sequence."""
+
+    def __init__(
+        self,
+        session_manager: SessionManager,
+        camera_service: CameraService,
+        event_bus: EventBus,
+        session_root: Path = Path("data/sessions"),
+        countdown_seconds: int = 5,
+        photo_count: int = 3,
+        interval_seconds: float = 3.0,
+    ) -> None:
+        self.session_manager = session_manager
+        self.camera_service = camera_service
+        self.event_bus = event_bus
+
+        self.session_root = session_root
+        self.countdown_seconds = countdown_seconds
+        self.photo_count = photo_count
+        self.interval_seconds = interval_seconds
+
+        self._task: asyncio.Task[None] | None = None
+        self._start_lock = asyncio.Lock()
+
+    @property
+    def running(self) -> bool:
+        """Return whether a photo sequence is currently running."""
+
+        return self._task is not None and not self._task.done()
+
+    async def start(self) -> None:
+        """Start a new photo session."""
+
+        async with self._start_lock:
+            if self.running:
+                raise PhotoSessionBusyError(
+                    "A photo session is already running."
+                )
+
+            if not self.camera_service.available:
+                self.session_manager.set_error(
+                    "Camera is not available."
+                )
+                await self._publish_state()
+                return
+
+            try:
+                self.session_manager.handle(
+                    SessionCommand.START_SESSION
+                )
+            except InvalidTransitionError:
+                raise PhotoSessionBusyError(
+                    "The photobooth is not ready for a new session."
+                )
+
+            await self._publish_state()
+
+            self._task = asyncio.create_task(
+                self._run(),
+                name="photo-session",
+            )
+
+    async def restart(self) -> None:
+        """Cancel the current sequence and reset the session."""
+
+        task = self._task
+
+        if task is not None and not task.done():
+            task.cancel()
+
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+
+        self._task = None
+
+        self.session_manager.handle(
+            SessionCommand.RESTART
+        )
+
+        await self._publish_state()
+
+    async def wait_until_idle(self) -> None:
+        """Wait until the active session task has finished."""
+
+        task = self._task
+
+        if task is not None:
+            await task
+
+    async def _run(self) -> None:
+        """Run countdown and photo sequence."""
+
+        countdown: CountdownService | None = None
+
+        try:
+            countdown = CountdownService(
+                seconds=self.countdown_seconds,
+                on_tick=self._countdown_tick,
+                on_finished=self._countdown_finished,
+            )
+
+            await countdown.start()
+
+            while countdown.running:
+                await asyncio.sleep(0.05)
+
+            await self._capture_photos()
+
+        except asyncio.CancelledError:
+            if countdown is not None:
+                await countdown.cancel()
+
+            raise
+
+        except (
+            CameraError,
+            InvalidTransitionError,
+        ) as exc:
+            self.session_manager.set_error(str(exc))
+            await self._publish_state()
+
+        except Exception as exc:
+            self.session_manager.set_error(
+                f"Unexpected photo session error: {exc}"
+            )
+            await self._publish_state()
+
+        finally:
+            self._task = None
+
+    async def _countdown_tick(
+        self,
+        remaining: int,
+    ) -> None:
+        """Update and publish one countdown step."""
+
+        self.session_manager.set_countdown(
+            remaining
+        )
+
+        await self._publish_state()
+
+    async def _countdown_finished(self) -> None:
+        """Move the session into CAPTURING."""
+
+        self.session_manager.handle(
+            SessionCommand.COUNTDOWN_FINISHED
+        )
+
+        await self._publish_state()
+
+    async def _capture_photos(self) -> None:
+        """Capture all configured photos."""
+
+        session_id = self.session_manager.session.id
+
+        session_directory = (
+            self.session_root / session_id
+        )
+
+        session_directory.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        for number in range(
+            1,
+            self.photo_count + 1,
+        ):
+            filename = (
+                session_directory
+                / f"photo_{number:02d}.jpg"
+            )
+
+            await asyncio.to_thread(
+                self.camera_service.capture_photo,
+                filename,
+            )
+
+            self.session_manager.add_photo(
+                str(filename)
+            )
+
+            await self._publish_state()
+
+            if number < self.photo_count:
+                await asyncio.sleep(
+                    self.interval_seconds
+                )
+
+        self.session_manager.handle(
+            SessionCommand.ALL_PHOTOS_CAPTURED
+        )
+
+        await self._publish_state()
+
+    async def _publish_state(self) -> None:
+        """Publish the current session state."""
+
+        await self.event_bus.publish(
+            self.session_manager.snapshot()
+        )
+

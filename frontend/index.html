@@ -11,7 +11,7 @@
 
     <link
         rel="stylesheet"
-        href="/static/css/app.css"
+        href="/static/css/app.css?v=5"
     >
 </head>
 
@@ -54,9 +54,53 @@
         </div>
     </section>
 
+<section
+    id="capture-screen"
+    class="hidden"
+>
+    <div class="session-message">
+        <h2>Aufnahme läuft</h2>
+
+        <p id="capture-status">
+            Foto 1 von 3
+        </p>
+    </div>
+</section>
+
+<section
+    id="processing-screen"
+    class="hidden"
+>
+    <div class="session-message">
+        <h2>Fotos aufgenommen</h2>
+
+        <p>
+            Die Bilder werden verarbeitet …
+        </p>
+    </div>
+</section>
+
+<section
+    id="error-screen"
+    class="hidden"
+>
+    <div class="session-message">
+        <h2>Es ist ein Fehler aufgetreten</h2>
+
+        <p id="error-message"></p>
+
+        <button
+            id="restart-button"
+            type="button"
+        >
+            Neu starten
+        </button>
+    </div>
+</section>
+
 </main>
 
-<script src="/static/js/app.js"></script>
+<script src="/static/js/app.js?v=5"></script>
 
 </body>
 </html>
