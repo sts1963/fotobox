@@ -37,3 +37,13 @@ def test_photo_requires_running_camera(
             tmp_path / "photo.jpg"
         )
 
+def test_capture_photo_without_running_camera(
+    tmp_path: Path,
+) -> None:
+    camera = CameraService()
+
+    with pytest.raises(CameraNotAvailableError):
+        camera.capture_photo(
+            tmp_path / "photo.jpg"
+        )
+
