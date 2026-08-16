@@ -5,6 +5,14 @@ camera:
   fps: 30
   jpeg_quality: 80
 
+camera:
+  device: "/dev/video0"
+  width: 1280
+  height: 720
+  fps: 30
+  jpeg_quality: 80
+  retry_interval: 2.0
+
 session:
   root: "data/sessions"
   countdown_seconds: 5 

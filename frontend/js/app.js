@@ -43,19 +43,133 @@ const previewRestartButton =
 const printButton =
     document.getElementById("print-button");
 
+const cameraStream =
+    document.getElementById("camera-stream");
+
+cameraStream.addEventListener(
+    "error",
+    () => {
+        console.log(
+            "Camera stream interrupted."
+        );
+    }
+);
 
 let socket = null;
+let cameraAvailable = null;
+let cameraStatusTimer = null;
+let serverConnected = false;
+let currentState = null;
+
+function restartCameraStream() {
+    const cameraStream =
+        document.getElementById("camera-stream");
+
+    if (!cameraStream) {
+        return;
+    }
+
+    /*
+     * The timestamp forces Safari to create a new
+     * HTTP connection instead of reusing the old
+     * interrupted MJPEG request.
+     */
+    cameraStream.src =
+        `/api/camera/stream?v=${Date.now()}`;
+}
 
 
-function setConnected(connected) {
-    if (connected) {
-        connectionStatus.textContent = "Bereit";
-    } else {
-        connectionStatus.textContent =
-            "Verbindung zur Fotobox verloren";
+async function checkCameraStatus() {
+    try {
+        const response = await fetch(
+            "/api/camera/status",
+            {
+                cache: "no-store",
+            }
+        );
+
+        if (!response.ok) {
+            return;
+        }
+
+        const status = await response.json();
+
+        const wasAvailable =
+            cameraAvailable;
+
+        cameraAvailable =
+            status.available === true;
+        updateReadyState();
+       
+        /*
+         * Camera has recovered:
+         *
+         * false -> true
+         *
+         * Reconnect the MJPEG stream.
+         */
+        if (
+            wasAvailable === false &&
+            cameraAvailable === true
+        ) {
+            console.log(
+                "Camera recovered. Restarting stream."
+            );
+
+            restartCameraStream();
+        }
+
+    } catch (error) {
+         cameraAvailable = false;
+         updateReadyState(); 
+        
+         console.error(
+            "Unable to read camera status:",
+            error
+        );
     }
 }
 
+
+function startCameraStatusMonitor() {
+    if (cameraStatusTimer !== null) {
+        return;
+    }
+
+    checkCameraStatus();
+
+    cameraStatusTimer = window.setInterval(
+        checkCameraStatus,
+        2000
+    );
+}
+
+function setConnected(connected) {
+    serverConnected = connected;
+    updateReadyState();
+}
+
+function updateReadyState() {
+    if (!serverConnected) {
+        connectionStatus.textContent =
+            "Verbindung getrennt";
+
+        startButton.disabled = true;
+        return;
+    }
+
+    if (cameraAvailable !== true) {
+        connectionStatus.textContent =
+            "Kamera nicht verfügbar";
+
+        startButton.disabled = true;
+        return;
+    }
+
+    connectionStatus.textContent = "Bereit";
+    startButton.disabled =
+        currentState !== "start";
+}
 
 function hideSessionScreens() {
     startScreen.classList.add("hidden");
@@ -85,7 +199,7 @@ function sendCommand(type) {
 
 function updateState(message) {
     const state = message.state;
-
+    currentState = state;
     console.log(
         "Fotobox state:",
         state
@@ -100,8 +214,8 @@ function updateState(message) {
                 "hidden"
             );
 
-            startButton.disabled = false;
-            break;
+           updateReadyState(); 
+           break;
 
 
         case "countdown":
@@ -304,4 +418,4 @@ printButton.disabled = true;
 
 
 connectWebSocket();
-
+startCameraStatusMonitor();

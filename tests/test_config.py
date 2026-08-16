@@ -21,6 +21,7 @@ camera:
   height: 720
   fps: 30
   jpeg_quality: 80
+  retry_interval: 2.0
 
 session:
   root: "data/sessions"
@@ -71,6 +72,9 @@ camera:
   height: 720
   fps: 30
   jpeg_quality: 80
+  retry_interval: 2.0
+
+  assert settings.camera.retry_interval == 2.0
 
 session:
   root: "data/sessions"

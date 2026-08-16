@@ -15,6 +15,7 @@ camera_service = CameraService(
     height=settings.camera.height,
     fps=settings.camera.fps,
     jpeg_quality=settings.camera.jpeg_quality,
+    retry_interval=settings.camera.retry_interval, 
 )
 
 

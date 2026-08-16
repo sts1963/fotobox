@@ -25,7 +25,7 @@ class CameraSettings:
     height: int
     fps: int
     jpeg_quality: int
-
+    retry_interval: float
 
 @dataclass(frozen=True)
 class SessionSettings:
@@ -126,6 +126,9 @@ def load_settings(
                 jpeg_quality=int(
                     camera["jpeg_quality"]
                 ),
+            retry_interval=float(
+                camera["retry_interval"]
+                ), 
             ),
             session=SessionSettings(
                 root=_project_path(
@@ -191,6 +194,11 @@ def _validate_settings(
     if settings.camera.fps <= 0:
         raise ConfigurationError(
             "camera.fps must be greater than zero."
+        )
+
+    if settings.camera.retry_interval <= 0:
+        raise ConfigurationError(
+            "camera.retry_interval must be greater than zero."
         )
 
     if not 1 <= settings.camera.jpeg_quality <= 100:

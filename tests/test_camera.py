@@ -16,16 +16,31 @@ def test_camera_initially_stopped() -> None:
     assert camera.available is False
 
 
-def test_camera_requires_valid_device() -> None:
+def test_camera_invalid_device_enters_error() -> None:
     camera = CameraService(
-        device="/dev/this-camera-does-not-exist"
+        device="/dev/this-camera-does-not-exist",
+        retry_interval=0.05,
     )
 
-    with pytest.raises(CameraNotAvailableError):
-        camera.start()
+    camera.start()
+
+    import time
+
+    deadline = time.time() + 1.0
+
+    while (
+        camera.state != CameraState.ERROR
+        and time.time() < deadline
+    ):
+        time.sleep(0.01)
 
     assert camera.state == CameraState.ERROR
+    assert camera.available is False
+    assert camera.last_error is not None
 
+    camera.stop()
+
+    assert camera.state == CameraState.STOPPED
 
 def test_photo_requires_running_camera(
     tmp_path: Path,
