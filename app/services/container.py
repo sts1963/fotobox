@@ -1,5 +1,4 @@
-from pathlib import Path
-
+from app.core.config import load_settings
 from app.core.events import EventBus
 from app.services.camera import CameraService
 from app.services.collage import CollageGenerator
@@ -7,12 +6,15 @@ from app.services.photo_session import PhotoSessionService
 from app.services.session_manager import SessionManager
 
 
+settings = load_settings()
+
+
 camera_service = CameraService(
-    device="/dev/video0",
-    width=1280,
-    height=720,
-    fps=30,
-    jpeg_quality=80,
+    device=settings.camera.device,
+    width=settings.camera.width,
+    height=settings.camera.height,
+    fps=settings.camera.fps,
+    jpeg_quality=settings.camera.jpeg_quality,
 )
 
 
@@ -22,10 +24,11 @@ event_bus = EventBus()
 
 
 collage_generator = CollageGenerator(
-    width=1800,
-    height=1200,
-    gap=24,
-    margin=24,
+    width=settings.collage.width,
+    height=settings.collage.height,
+    gap=settings.collage.gap,
+    margin=settings.collage.margin,
+    jpeg_quality=settings.collage.jpeg_quality,
 )
 
 
@@ -34,10 +37,14 @@ photo_session_service = PhotoSessionService(
     camera_service=camera_service,
     collage_generator=collage_generator,
     event_bus=event_bus,
-    session_root=Path("data/sessions"),
-    logo_path=Path("assets/logo.png"),
-    countdown_seconds=5,
-    photo_count=3,
-    interval_seconds=3,
+    session_root=settings.session.root,
+    logo_path=settings.collage.logo,
+    countdown_seconds=(
+        settings.session.countdown_seconds
+    ),
+    photo_count=settings.session.photo_count,
+    interval_seconds=(
+        settings.session.interval_seconds
+    ),
 )
 

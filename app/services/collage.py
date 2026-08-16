@@ -23,6 +23,7 @@ class CollageGenerator:
         height: int = 1200,
         gap: int = 24,
         margin: int = 24,
+        jpeg_quality: int = 95,
     ) -> None:
         if width <= 0 or height <= 0:
             raise ValueError(
@@ -38,6 +39,13 @@ class CollageGenerator:
         self.height = height
         self.gap = gap
         self.margin = margin
+
+        if not 1 <= jpeg_quality <= 100:
+            raise ValueError(
+                 "JPEG quality must be between 1 and 100."
+             )
+
+        self.jpeg_quality = jpeg_quality
 
         self.processor = ImageProcessor()
 
@@ -151,7 +159,7 @@ class CollageGenerator:
             canvas.save(
                 output_path,
                 format="JPEG",
-                quality=95,
+                quality=self.jpeg_quality,
                 subsampling=0,
                 dpi=(300, 300),
             )
