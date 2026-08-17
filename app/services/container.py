@@ -4,7 +4,7 @@ from app.services.camera import CameraService
 from app.services.collage import CollageGenerator
 from app.services.photo_session import PhotoSessionService
 from app.services.session_manager import SessionManager
-
+from app.services.diagnostics import DiagnosticService
 
 settings = load_settings()
 
@@ -47,5 +47,12 @@ photo_session_service = PhotoSessionService(
     interval_seconds=(
         settings.session.interval_seconds
     ),
+)
+
+diagnostic_service = DiagnosticService(
+    camera_service=camera_service,
+    session_manager=session_manager,
+    photo_session_service=photo_session_service,
+    data_path=settings.session.root,
 )
 
