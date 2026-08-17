@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import logging
 import threading
-import time
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
 
 import cv2
+
+
+logger = logging.getLogger(__name__)
 
 
 class CameraError(Exception):
@@ -107,6 +110,14 @@ class CameraService:
             self._state = CameraState.STARTING
             self._stop_event.clear()
 
+        logger.info(
+            "Starting camera service: device=%s resolution=%sx%s fps=%s",
+            self.device,
+            self.width,
+            self.height,
+            self.fps,
+        )
+
         self._thread = threading.Thread(
             target=self._camera_loop,
             name="camera-capture",
@@ -117,6 +128,8 @@ class CameraService:
 
     def stop(self) -> None:
         """Stop camera management and release device."""
+
+        logger.info("Stopping camera service")
 
         self._stop_event.set()
 
@@ -133,6 +146,8 @@ class CameraService:
             self._last_frame_at = None
             self._consecutive_errors = 0
             self._last_error = None
+
+        logger.info("Camera service stopped")
 
     def _camera_loop(self) -> None:
         """Open, monitor and recover the camera."""
@@ -184,18 +199,26 @@ class CameraService:
                 continue
 
             with self._lock:
+                recovered = (
+                    self._state == CameraState.ERROR
+                    or self._consecutive_errors > 0
+                )
+
                 self._latest_frame = frame.copy()
                 self._latest_frame_jpeg = (
                     encoded.tobytes()
                 )
 
-                self._last_frame_at = (
-                    datetime.now()
-                )
-
+                self._last_frame_at = datetime.now()
                 self._consecutive_errors = 0
                 self._last_error = None
                 self._state = CameraState.RUNNING
+
+            if recovered:
+                logger.info(
+                    "Camera recovered and is running again: %s",
+                    self.device,
+                )
 
     def _ensure_camera_open(self) -> bool:
         """Open the camera if no active capture exists."""
@@ -222,17 +245,20 @@ class CameraService:
                 self._state = CameraState.ERROR
                 self._consecutive_errors += 1
                 self._last_error = (
-                    f"Unable to open camera: "
-                    f"{self.device}"
+                    f"Unable to open camera: {self.device}"
                 )
+
+            logger.warning(
+                "Unable to open camera %s; retrying in %.1f seconds",
+                self.device,
+                self.retry_interval,
+            )
 
             return False
 
         capture.set(
             cv2.CAP_PROP_FOURCC,
-            cv2.VideoWriter_fourcc(
-                *"MJPG"
-            ),
+            cv2.VideoWriter_fourcc(*"MJPG"),
         )
 
         capture.set(
@@ -256,6 +282,11 @@ class CameraService:
             self._latest_frame_jpeg = None
             self._state = CameraState.STARTING
 
+        logger.info(
+            "Camera opened successfully: %s",
+            self.device,
+        )
+
         return True
 
     def _get_capture(
@@ -277,7 +308,10 @@ class CameraService:
             try:
                 capture.release()
             except Exception:
-                pass
+                logger.exception(
+                    "Unexpected error while releasing camera %s",
+                    self.device,
+                )
 
     def _handle_capture_failure(
         self,
@@ -292,6 +326,11 @@ class CameraService:
 
             self._latest_frame = None
             self._latest_frame_jpeg = None
+
+        logger.warning(
+            "Camera capture failure: %s",
+            message,
+        )
 
     def get_latest_frame(
         self,
@@ -339,6 +378,11 @@ class CameraService:
         )
 
         if not success:
+            logger.error(
+                "Unable to save camera image: %s",
+                path,
+            )
+
             raise CameraError(
                 f"Unable to save image: {path}"
             )

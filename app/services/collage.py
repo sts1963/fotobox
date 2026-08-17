@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from PIL import Image
@@ -8,6 +9,9 @@ from app.services.image_processing import (
     ImageProcessingError,
     ImageProcessor,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 class CollageError(Exception):
@@ -35,16 +39,15 @@ class CollageGenerator:
                 "Gap and margin must not be negative."
             )
 
+        if not 1 <= jpeg_quality <= 100:
+            raise ValueError(
+                "JPEG quality must be between 1 and 100."
+            )
+
         self.width = width
         self.height = height
         self.gap = gap
         self.margin = margin
-
-        if not 1 <= jpeg_quality <= 100:
-            raise ValueError(
-                 "JPEG quality must be between 1 and 100."
-             )
-
         self.jpeg_quality = jpeg_quality
 
         self.processor = ImageProcessor()
@@ -61,6 +64,11 @@ class CollageGenerator:
             raise CollageError(
                 "Exactly three photos are required for the 2x2 layout."
             )
+
+        logger.info(
+            "Creating 2x2 collage: output=%s",
+            output_path,
+        )
 
         content_width = (
             self.width
@@ -164,9 +172,19 @@ class CollageGenerator:
                 dpi=(300, 300),
             )
         except Exception as exc:
+            logger.exception(
+                "Unable to save collage: %s",
+                output_path,
+            )
+
             raise CollageError(
                 f"Unable to save collage: {output_path}"
             ) from exc
+
+        logger.info(
+            "Collage saved: %s",
+            output_path,
+        )
 
         return output_path
 

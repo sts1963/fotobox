@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from pathlib import Path
 
 from app.core.events import EventBus
@@ -12,6 +13,9 @@ from app.services.session_manager import (
     InvalidTransitionError,
     SessionManager,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 class PhotoSessionBusyError(Exception):
@@ -67,6 +71,11 @@ class PhotoSessionService:
                 self.session_manager.set_error(
                     "Camera is not available."
                 )
+
+                logger.error(
+                    "Unable to start photo session: camera is not available"
+                )
+
                 await self._publish_state()
                 return
 
@@ -74,10 +83,21 @@ class PhotoSessionService:
                 self.session_manager.handle(
                     SessionCommand.START_SESSION
                 )
+
             except InvalidTransitionError as exc:
+                logger.warning(
+                    "Unable to start photo session: %s",
+                    exc,
+                )
+
                 raise PhotoSessionBusyError(
                     "The photobooth is not ready for a new session."
                 ) from exc
+
+            logger.info(
+                "Photo session started: session_id=%s",
+                self.session_manager.session.id,
+            )
 
             await self._publish_state()
 
@@ -92,6 +112,11 @@ class PhotoSessionService:
         task = self._task
 
         if task is not None and not task.done():
+            logger.info(
+                "Cancelling running photo session: session_id=%s",
+                self.session_manager.session.id,
+            )
+
             task.cancel()
 
             try:
@@ -103,6 +128,11 @@ class PhotoSessionService:
 
         self.session_manager.handle(
             SessionCommand.RESTART
+        )
+
+        logger.info(
+            "Photo session reset: new_session_id=%s",
+            self.session_manager.session.id,
         )
 
         await self._publish_state()
@@ -139,6 +169,11 @@ class PhotoSessionService:
             if countdown is not None:
                 await countdown.cancel()
 
+            logger.info(
+                "Photo session cancelled: session_id=%s",
+                self.session_manager.session.id,
+            )
+
             raise
 
         except (
@@ -146,13 +181,28 @@ class PhotoSessionService:
             CollageError,
             InvalidTransitionError,
         ) as exc:
-            self.session_manager.set_error(str(exc))
+            logger.error(
+                "Photo session failed: session_id=%s error=%s",
+                self.session_manager.session.id,
+                exc,
+            )
+
+            self.session_manager.set_error(
+                str(exc)
+            )
+
             await self._publish_state()
 
         except Exception as exc:
+            logger.exception(
+                "Unexpected photo session error: session_id=%s",
+                self.session_manager.session.id,
+            )
+
             self.session_manager.set_error(
                 f"Unexpected photo session error: {exc}"
             )
+
             await self._publish_state()
 
         finally:
@@ -177,12 +227,19 @@ class PhotoSessionService:
             SessionCommand.COUNTDOWN_FINISHED
         )
 
+        logger.info(
+            "Countdown finished: session_id=%s",
+            self.session_manager.session.id,
+        )
+
         await self._publish_state()
 
     async def _capture_photos(self) -> None:
         """Capture all configured photos."""
 
-        session_id = self.session_manager.session.id
+        session_id = (
+            self.session_manager.session.id
+        )
 
         session_directory = (
             self.session_root / session_id
@@ -207,6 +264,13 @@ class PhotoSessionService:
                 filename,
             )
 
+            logger.info(
+                "Photo captured: session_id=%s photo=%s path=%s",
+                session_id,
+                number,
+                filename,
+            )
+
             self.session_manager.add_photo(
                 str(filename)
             )
@@ -222,12 +286,19 @@ class PhotoSessionService:
             SessionCommand.ALL_PHOTOS_CAPTURED
         )
 
+        logger.info(
+            "All photos captured: session_id=%s",
+            session_id,
+        )
+
         await self._publish_state()
 
     async def _create_collage(self) -> None:
         """Generate the 2x2 collage for the current session."""
 
-        session = self.session_manager.session
+        session = (
+            self.session_manager.session
+        )
 
         photo_paths = [
             Path(filename)
@@ -244,7 +315,14 @@ class PhotoSessionService:
         )
 
         output_path = (
-            session_directory / "collage.jpg"
+            session_directory
+            / "collage.jpg"
+        )
+
+        logger.info(
+            "Creating collage: session_id=%s output=%s",
+            session.id,
+            output_path,
         )
 
         result = await asyncio.to_thread(
@@ -260,6 +338,12 @@ class PhotoSessionService:
 
         self.session_manager.handle(
             SessionCommand.PROCESSING_FINISHED
+        )
+
+        logger.info(
+            "Collage created: session_id=%s path=%s",
+            session.id,
+            result,
         )
 
         await self._publish_state()

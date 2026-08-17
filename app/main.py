@@ -10,21 +10,36 @@ from app.api.websocket import router as websocket_router
 
 from app.services.container import camera_service 
 
+import logging
+from app.core.logging_config import configure_logging
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BASE_DIR / "frontend"
+LOG_FILE = BASE_DIR / "data" / "logs" / "fotobox.log"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application startup and shutdown."""
+    configure_logging(LOG_FILE)
+    logger = logging.getLogger(__name__)
+
+    logger.info("Fotobox application starting")
 
     try:
         camera_service.start()
-    except Exception as exc:
-        print(f"Camera startup failed: {exc}")
+        logger.info("Camera service management started")
+    except Exception:
+        logger.exception(
+            "Camera service failed during startup"
+        )
 
     yield
 
+    logger.info("Fotobox application shutting down")
+
     camera_service.stop()
+
+    logger.info("Camera service stopped")
 
 app = FastAPI(
     title="Fotobox",
