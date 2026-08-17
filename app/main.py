@@ -70,3 +70,14 @@ async def index() -> FileResponse:
         FRONTEND_DIR / "index.html"
     )
 
+@app.get(
+    "/console",
+    include_in_schema=False,
+)
+async def console() -> FileResponse:
+    """Serve the local Fotobox service console."""
+
+    return FileResponse(
+        FRONTEND_DIR / "console.html"
+    )
+

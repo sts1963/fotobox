@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Fotobox Konsole</title>
+
+    <link
+        rel="stylesheet"
+        href="/static/css/console.css?v=1"
+    >
+</head>
+
+<body>
+
+<main class="console">
+
+    <header class="console-header">
+        <div>
+            <h1>Fotobox</h1>
+            <p>Servicekonsole</p>
+        </div>
+
+        <div
+            id="overall-status"
+            class="status-badge unknown"
+        >
+            Wird geladen …
+        </div>
+    </header>
+
+
+    <section class="status-grid">
+
+        <article class="card">
+            <h2>Kamera</h2>
+
+            <dl>
+                <dt>Status</dt>
+                <dd id="camera-state">–</dd>
+
+                <dt>Verfügbar</dt>
+                <dd id="camera-available">–</dd>
+
+                <dt>Letzter Frame</dt>
+                <dd id="camera-last-frame">–</dd>
+
+                <dt>Fehler</dt>
+                <dd id="camera-error">–</dd>
+            </dl>
+        </article>
+
+
+        <article class="card">
+            <h2>Fotosession</h2>
+
+            <dl>
+                <dt>Status</dt>
+                <dd id="session-state">–</dd>
+
+                <dt>Aktiv</dt>
+                <dd id="session-running">–</dd>
+
+                <dt>Fotos</dt>
+                <dd id="session-photos">–</dd>
+
+                <dt>Session-ID</dt>
+                <dd
+                    id="session-id"
+                    class="small-value"
+                >
+                    –
+                </dd>
+            </dl>
+        </article>
+
+
+        <article class="card">
+            <h2>System</h2>
+
+            <dl>
+                <dt>CPU-Temperatur</dt>
+                <dd id="cpu-temperature">–</dd>
+
+                <dt>System-Uptime</dt>
+                <dd id="system-uptime">–</dd>
+
+                <dt>Fotobox-Uptime</dt>
+                <dd id="application-uptime">–</dd>
+
+                <dt>Freier Speicher</dt>
+                <dd id="disk-free">–</dd>
+            </dl>
+        </article>
+
+
+        <article class="card">
+            <h2>Speicher</h2>
+
+            <dl>
+                <dt>Gesamt</dt>
+                <dd id="disk-total">–</dd>
+
+                <dt>Belegt</dt>
+                <dd id="disk-used">–</dd>
+
+                <dt>Belegung</dt>
+                <dd id="disk-percent">–</dd>
+
+                <dt>Collage</dt>
+                <dd id="session-collage">–</dd>
+            </dl>
+        </article>
+
+    </section>
+
+
+    <section class="log-card">
+
+        <div class="log-header">
+            <h2>Fotobox-Log</h2>
+
+            <span id="log-count">
+                0 Einträge
+            </span>
+        </div>
+
+        <pre id="log-output">Log wird geladen …</pre>
+
+    </section>
+
+</main>
+
+<script src="/static/js/console.js?v=1"></script>
+
+</body>
+</html>
+
