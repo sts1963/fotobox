@@ -5,6 +5,7 @@ from app.services.collage import CollageGenerator
 from app.services.photo_session import PhotoSessionService
 from app.services.session_manager import SessionManager
 from app.services.diagnostics import DiagnosticService
+from pathlib import Path
 
 settings = load_settings()
 
@@ -54,5 +55,6 @@ diagnostic_service = DiagnosticService(
     session_manager=session_manager,
     photo_session_service=photo_session_service,
     data_path=settings.session.root,
+    log_path=Path("data/logs/fotobox.log"),
 )
 

@@ -28,6 +28,7 @@ def test_diagnostic_snapshot(
         session_manager=session_manager,
         photo_session_service=photo_session_service,
         data_path=tmp_path,
+        log_path=tmp_path / "fotobox.log",
     )
 
     result = diagnostics.snapshot()
@@ -41,4 +42,45 @@ def test_diagnostic_snapshot(
     assert result["session"]["running"] is False
 
     assert "disk" in result["system"]
+
+def test_diagnostic_log_lines(
+    tmp_path: Path,
+) -> None:
+    log_path = tmp_path / "fotobox.log"
+
+    log_path.write_text(
+        "line 1\n"
+        "line 2\n"
+        "line 3\n"
+        "line 4\n",
+        encoding="utf-8",
+    )
+
+    camera = CameraService()
+    session_manager = SessionManager()
+
+    photo_session_service = PhotoSessionService(
+        session_manager=session_manager,
+        camera_service=camera,
+        collage_generator=CollageGenerator(),
+        event_bus=EventBus(),
+        session_root=tmp_path,
+    )
+
+    diagnostics = DiagnosticService(
+        camera_service=camera,
+        session_manager=session_manager,
+        photo_session_service=photo_session_service,
+        data_path=tmp_path,
+        log_path=log_path,
+    )
+
+    lines = diagnostics.get_log_lines(
+        limit=2
+    )
+
+    assert lines == [
+        "line 3",
+        "line 4",
+    ]
 

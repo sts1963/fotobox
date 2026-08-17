@@ -19,11 +19,13 @@ class DiagnosticService:
         session_manager: SessionManager,
         photo_session_service: PhotoSessionService,
         data_path: Path,
+        log_path: Path,
     ) -> None:
         self.camera_service = camera_service
         self.session_manager = session_manager
         self.photo_session_service = photo_session_service
         self.data_path = data_path
+        self.log_path = log_path
 
         self._started_at = time.monotonic()
 
@@ -157,6 +159,28 @@ class DiagnosticService:
                 continue
 
         return None
+
+    def get_log_lines(
+        self,
+        limit: int = 100,
+    ) -> list[str]:
+        """Return the last lines from the Fotobox log."""
+
+        limit = max(
+            1,
+            min(limit, 500),
+        )
+
+        try:
+            lines = self.log_path.read_text(
+                encoding="utf-8",
+                errors="replace",
+            ).splitlines()
+
+        except OSError:
+            return []
+
+        return lines[-limit:]
 
     def _read_disk_usage(
         self,
