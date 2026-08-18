@@ -1,9 +1,17 @@
-from fastapi import APIRouter
+import logging
+import subprocess
+logger = logging.getLogger(__name__)
+
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    HTTPException,
+    Request,
+)
 
 from app.services.container import (
     diagnostic_service,
 )
-
 
 router = APIRouter(
     prefix="/api/admin",
@@ -32,3 +40,72 @@ def admin_logs(
         "lines": lines,
     }
 
+def _poweroff_system() -> None:
+    """Power off the Raspberry Pi."""
+
+    logger.warning(
+        "System shutdown initiated"
+    )
+
+    result = subprocess.run(
+        [
+            "sudo",
+            "-n",
+            "/usr/bin/systemctl",
+            "poweroff",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    if result.returncode != 0:
+        logger.error(
+            "System shutdown failed: %s",
+            result.stderr.strip(),
+        )
+
+
+@router.post(
+    "/shutdown",
+    status_code=202,
+)
+
+async def admin_shutdown(
+    request: Request,
+    background_tasks: BackgroundTasks,
+) -> dict[str, str]:
+    """Request a shutdown from the local service console."""
+
+    client_host = (
+        request.client.host
+        if request.client is not None
+        else None
+    )
+
+    if client_host not in {
+        "127.0.0.1",
+        "::1",
+    }:
+        logger.warning(
+            "Rejected remote shutdown request from %s",
+            client_host,
+        )
+
+        raise HTTPException(
+            status_code=403,
+            detail="Shutdown is only allowed locally.",
+        )
+
+    logger.warning(
+        "Shutdown requested from local console"
+    )
+
+    background_tasks.add_task(
+        _poweroff_system
+    )
+
+    return {
+        "status": "accepted",
+        "message": "System shutdown requested.",
+    }

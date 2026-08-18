@@ -13,7 +13,7 @@
 
     <link
         rel="stylesheet"
-        href="/static/css/console.css?v=1"
+        href="/static/css/console.css?v=4"
     >
 </head>
 
@@ -27,12 +27,26 @@
             <p>Servicekonsole</p>
         </div>
 
-        <div
-            id="overall-status"
-            class="status-badge unknown"
-        >
-            Wird geladen …
-        </div>
+        <div class="header-actions">
+
+    <div
+        id="overall-status"
+        class="status-badge unknown"
+    >
+        Wird geladen …
+    </div>
+
+    <button
+        id="shutdown-button"
+        class="shutdown-button"
+        type="button"
+        aria-label="Fotobox ausschalten"
+        title="Fotobox ausschalten"
+    >
+        ⏻
+    </button>
+
+</div>
     </header>
 
 
@@ -134,10 +148,43 @@
         <pre id="log-output">Log wird geladen …</pre>
 
     </section>
+<dialog id="shutdown-dialog">
+
+    <div class="shutdown-dialog-content">
+
+        <h2>Fotobox ausschalten?</h2>
+
+        <p>
+            Der Raspberry Pi wird vollständig
+            heruntergefahren.
+        </p>
+
+        <div class="shutdown-dialog-actions">
+
+            <button
+                id="shutdown-cancel"
+                type="button"
+            >
+                Abbrechen
+            </button>
+
+            <button
+                id="shutdown-confirm"
+                type="button"
+                class="danger"
+            >
+                Ausschalten
+            </button>
+
+        </div>
+
+    </div>
+
+</dialog>
 
 </main>
 
-<script src="/static/js/console.js?v=1"></script>
+<script src="/static/js/console.js?v=4"></script>
 
 </body>
 </html>

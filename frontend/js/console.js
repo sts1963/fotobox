@@ -54,7 +54,17 @@ const logOutput =
 
 const logCount =
     document.getElementById("log-count");
+const shutdownButton =
+    document.getElementById("shutdown-button");
 
+const shutdownDialog =
+    document.getElementById("shutdown-dialog");
+
+const shutdownCancel =
+    document.getElementById("shutdown-cancel");
+
+const shutdownConfirm =
+    document.getElementById("shutdown-confirm");
 
 function yesNo(value) {
     return value ? "Ja" : "Nein";
@@ -307,7 +317,7 @@ async function loadStatus() {
 async function loadLogs() {
     try {
         const response = await fetch(
-            "/api/admin/logs?limit=100",
+            "/api/admin/logs?limit=40",
             {
                 cache: "no-store",
             }
@@ -345,6 +355,80 @@ async function loadLogs() {
     }
 }
 
+shutdownButton.addEventListener(
+    "click",
+    () => {
+        shutdownDialog.showModal();
+    }
+);
+
+
+shutdownCancel.addEventListener(
+    "click",
+    () => {
+        shutdownDialog.close();
+    }
+);
+
+
+shutdownConfirm.addEventListener(
+    "click",
+    async () => {
+        shutdownConfirm.disabled = true;
+
+        shutdownConfirm.textContent =
+            "Wird ausgeschaltet …";
+
+        try {
+            const response = await fetch(
+                "/api/admin/shutdown",
+                {
+                    method: "POST",
+                    cache: "no-store",
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(
+                    `HTTP ${response.status}`
+                );
+            }
+
+            overallStatus.textContent =
+                "System wird ausgeschaltet …";
+
+            overallStatus.classList.remove(
+                "ok",
+                "busy",
+                "unknown"
+            );
+
+            overallStatus.classList.add(
+                "error"
+            );
+
+        } catch (error) {
+            console.error(
+                "Shutdown failed:",
+                error
+            );
+
+            shutdownConfirm.disabled = false;
+
+            shutdownConfirm.textContent =
+                "Ausschalten";
+
+            shutdownDialog.close();
+
+            overallStatus.textContent =
+                "Shutdown fehlgeschlagen";
+
+            overallStatus.classList.add(
+                "error"
+            );
+        }
+    }
+);
 
 function refreshConsole() {
     loadStatus();
