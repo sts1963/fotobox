@@ -6,7 +6,7 @@ from app.services.photo_session import PhotoSessionService
 from app.services.session_manager import SessionManager
 from app.services.collage import CollageGenerator
 from app.core.events import EventBus
-
+from app.services.background import BackgroundProcessor
 
 def test_diagnostic_snapshot(
     tmp_path: Path,
@@ -16,11 +16,14 @@ def test_diagnostic_snapshot(
     session_manager = SessionManager()
 
     photo_session_service = PhotoSessionService(
-        session_manager=session_manager,
-        camera_service=camera,
-        collage_generator=CollageGenerator(),
-        event_bus=EventBus(),
-        session_root=tmp_path,
+         session_manager=session_manager,
+         camera_service=camera,
+         collage_generator=CollageGenerator(),
+         background_processor=BackgroundProcessor(),
+         event_bus=EventBus(),
+         session_root=tmp_path,
+         background_enabled=False,
+         background_images=(),
     )
 
     diagnostics = DiagnosticService(
@@ -63,8 +66,11 @@ def test_diagnostic_log_lines(
         session_manager=session_manager,
         camera_service=camera,
         collage_generator=CollageGenerator(),
+        background_processor=BackgroundProcessor(),
         event_bus=EventBus(),
         session_root=tmp_path,
+        background_enabled=False,
+        background_images=(),
     )
 
     diagnostics = DiagnosticService(

@@ -36,6 +36,21 @@ collage:
   gap: 24
   jpeg_quality: 95
   logo: "assets/logo.png"
+background:
+  enabled: false
+  mode: "greenscreen"
+
+  images:
+    - "assets/backgrounds/background_01.jpg"
+    - "assets/backgrounds/background_02.jpg"
+    - "assets/backgrounds/background_03.jpg"
+
+  greenscreen:
+    hue_min: 35
+    hue_max: 90
+    saturation_min: 60
+    value_min: 40
+    feather: 5
 
 printer:
   enabled: false

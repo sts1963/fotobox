@@ -13,7 +13,10 @@ from app.services.session_manager import (
     InvalidTransitionError,
     SessionManager,
 )
-
+from app.services.background import (
+    BackgroundProcessingError,
+    BackgroundProcessor,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +33,12 @@ class PhotoSessionService:
         session_manager: SessionManager,
         camera_service: CameraService,
         collage_generator: CollageGenerator,
+        background_processor: BackgroundProcessor,
         event_bus: EventBus,
         session_root: Path = Path("data/sessions"),
         logo_path: Path = Path("assets/logo.png"),
+        background_enabled: bool = False,
+        background_images: tuple[Path, ...] = (),
         countdown_seconds: int = 5,
         photo_count: int = 3,
         interval_seconds: float = 3.0,
@@ -41,7 +47,9 @@ class PhotoSessionService:
         self.camera_service = camera_service
         self.collage_generator = collage_generator
         self.event_bus = event_bus
-
+        self.background_processor = background_processor
+        self.background_enabled = background_enabled
+        self.background_images = background_images
         self.session_root = session_root
         self.logo_path = logo_path
 
@@ -161,6 +169,13 @@ class PhotoSessionService:
 
             while countdown.running:
                 await asyncio.sleep(0.05)
+            await self._capture_photos()
+
+            photo_paths = await self._prepare_photos()
+
+            await self._create_collage(
+                photo_paths
+            )
 
             await self._capture_photos()
             await self._create_collage()
@@ -179,6 +194,7 @@ class PhotoSessionService:
         except (
             CameraError,
             CollageError,
+            BackgroundProcessingError,
             InvalidTransitionError,
         ) as exc:
             logger.error(
@@ -293,17 +309,91 @@ class PhotoSessionService:
 
         await self._publish_state()
 
-    async def _create_collage(self) -> None:
+    async def _prepare_photos(
+        self,
+    ) -> list[Path]:
+       """Return original or background-processed photos."""
+
+       session = self.session_manager.session
+
+       original_paths = [
+           Path(filename)
+           for filename in session.photos
+       ]
+
+       if not self.background_enabled:
+           logger.info(
+               "Virtual backgrounds disabled: session_id=%s",
+               session.id,
+           )
+
+           return original_paths
+
+       if len(self.background_images) != len(
+           original_paths
+       ):
+           raise BackgroundProcessingError(
+               "Number of configured background images "
+               "does not match number of photos."
+           )
+
+       logger.info(
+           "Applying virtual backgrounds: session_id=%s",
+           session.id,
+       )
+
+       processed_paths: list[Path] = []
+
+       session_directory = (
+           self.session_root / session.id
+       )
+
+       for number, (
+           photo_path,
+           background_path,
+       ) in enumerate(
+           zip(
+               original_paths,
+               self.background_images,
+               strict=True,
+           ),
+           start=1,
+       ):
+           output_path = (
+               session_directory
+               / f"processed_{number:02d}.jpg"
+           )
+
+           result = await asyncio.to_thread(
+               self.background_processor.replace_greenscreen,
+               photo_path,
+               background_path,
+               output_path,
+           )
+
+           processed_paths.append(
+               result
+           )
+
+           logger.info(
+               "Virtual background applied: "
+               "session_id=%s photo=%s background=%s",
+               session.id,
+               number,
+               background_path,
+           )
+
+       return processed_paths
+
+    async def _create_collage(
+        self,
+        photo_paths: list[Path],
+    ) -> None:
         """Generate the 2x2 collage for the current session."""
 
         session = (
             self.session_manager.session
         )
-
-        photo_paths = [
-            Path(filename)
-            for filename in session.photos
-        ]
 
         if len(photo_paths) != 3:
             raise CollageError(

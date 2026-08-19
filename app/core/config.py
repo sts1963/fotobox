@@ -27,6 +27,7 @@ class CameraSettings:
     jpeg_quality: int
     retry_interval: float
 
+
 @dataclass(frozen=True)
 class SessionSettings:
     root: Path
@@ -46,6 +47,23 @@ class CollageSettings:
 
 
 @dataclass(frozen=True)
+class GreenscreenSettings:
+    hue_min: int
+    hue_max: int
+    saturation_min: int
+    value_min: int
+    feather: int
+
+
+@dataclass(frozen=True)
+class BackgroundSettings:
+    enabled: bool
+    mode: str
+    images: tuple[Path, ...]
+    greenscreen: GreenscreenSettings
+
+
+@dataclass(frozen=True)
 class PrinterSettings:
     enabled: bool
     name: str
@@ -56,6 +74,7 @@ class Settings:
     camera: CameraSettings
     session: SessionSettings
     collage: CollageSettings
+    background: BackgroundSettings
     printer: PrinterSettings
 
 
@@ -97,10 +116,12 @@ def load_settings(
             encoding="utf-8",
         ) as file:
             raw = yaml.safe_load(file)
+
     except OSError as exc:
         raise ConfigurationError(
             f"Unable to read configuration: {path}"
         ) from exc
+
     except yaml.YAMLError as exc:
         raise ConfigurationError(
             f"Invalid YAML configuration: {path}"
@@ -112,24 +133,58 @@ def load_settings(
         )
 
     try:
-        camera = _section(raw, "camera")
-        session = _section(raw, "session")
-        collage = _section(raw, "collage")
-        printer = _section(raw, "printer")
+        camera = _section(
+            raw,
+            "camera",
+        )
+
+        session = _section(
+            raw,
+            "session",
+        )
+
+        collage = _section(
+            raw,
+            "collage",
+        )
+
+        background = _section(
+            raw,
+            "background",
+        )
+
+        greenscreen = _section(
+            background,
+            "greenscreen",
+        )
+
+        printer = _section(
+            raw,
+            "printer",
+        )
 
         settings = Settings(
             camera=CameraSettings(
-                device=str(camera["device"]),
-                width=int(camera["width"]),
-                height=int(camera["height"]),
-                fps=int(camera["fps"]),
+                device=str(
+                    camera["device"]
+                ),
+                width=int(
+                    camera["width"]
+                ),
+                height=int(
+                    camera["height"]
+                ),
+                fps=int(
+                    camera["fps"]
+                ),
                 jpeg_quality=int(
                     camera["jpeg_quality"]
                 ),
-            retry_interval=float(
-                camera["retry_interval"]
-                ), 
+                retry_interval=float(
+                    camera["retry_interval"]
+                ),
             ),
+
             session=SessionSettings(
                 root=_project_path(
                     str(session["root"])
@@ -144,11 +199,20 @@ def load_settings(
                     session["interval_seconds"]
                 ),
             ),
+
             collage=CollageSettings(
-                width=int(collage["width"]),
-                height=int(collage["height"]),
-                margin=int(collage["margin"]),
-                gap=int(collage["gap"]),
+                width=int(
+                    collage["width"]
+                ),
+                height=int(
+                    collage["height"]
+                ),
+                margin=int(
+                    collage["margin"]
+                ),
+                gap=int(
+                    collage["gap"]
+                ),
                 jpeg_quality=int(
                     collage["jpeg_quality"]
                 ),
@@ -156,9 +220,47 @@ def load_settings(
                     str(collage["logo"])
                 ),
             ),
+
+            background=BackgroundSettings(
+                enabled=bool(
+                    background["enabled"]
+                ),
+                mode=str(
+                    background["mode"]
+                ),
+                images=tuple(
+                    _project_path(
+                        str(image_path)
+                    )
+                    for image_path
+                    in background["images"]
+                ),
+                greenscreen=GreenscreenSettings(
+                    hue_min=int(
+                        greenscreen["hue_min"]
+                    ),
+                    hue_max=int(
+                        greenscreen["hue_max"]
+                    ),
+                    saturation_min=int(
+                        greenscreen["saturation_min"]
+                    ),
+                    value_min=int(
+                        greenscreen["value_min"]
+                    ),
+                    feather=int(
+                        greenscreen["feather"]
+                    ),
+                ),
+            ),
+
             printer=PrinterSettings(
-                enabled=bool(printer["enabled"]),
-                name=str(printer["name"]),
+                enabled=bool(
+                    printer["enabled"]
+                ),
+                name=str(
+                    printer["name"]
+                ),
             ),
         )
 
@@ -171,7 +273,9 @@ def load_settings(
             f"Invalid configuration value: {exc}"
         ) from exc
 
-    _validate_settings(settings)
+    _validate_settings(
+        settings
+    )
 
     return settings
 
@@ -246,8 +350,56 @@ def _validate_settings(
             "collage.jpeg_quality must be between 1 and 100."
         )
 
+    if settings.background.mode != "greenscreen":
+        raise ConfigurationError(
+            "background.mode must currently be 'greenscreen'."
+        )
+
+    if settings.background.enabled:
+        if len(settings.background.images) != 3:
+            raise ConfigurationError(
+                "Exactly three background images are required."
+            )
+
+    gs = settings.background.greenscreen
+
+    if not 0 <= gs.hue_min <= 179:
+        raise ConfigurationError(
+            "background.greenscreen.hue_min "
+            "must be between 0 and 179."
+        )
+
+    if not 0 <= gs.hue_max <= 179:
+        raise ConfigurationError(
+            "background.greenscreen.hue_max "
+            "must be between 0 and 179."
+        )
+
+    if gs.hue_min >= gs.hue_max:
+        raise ConfigurationError(
+            "background.greenscreen.hue_min "
+            "must be smaller than hue_max."
+        )
+
+    if not 0 <= gs.saturation_min <= 255:
+        raise ConfigurationError(
+            "background.greenscreen.saturation_min "
+            "must be between 0 and 255."
+        )
+
+    if not 0 <= gs.value_min <= 255:
+        raise ConfigurationError(
+            "background.greenscreen.value_min "
+            "must be between 0 and 255."
+        )
+
+    if gs.feather < 0:
+        raise ConfigurationError(
+            "background.greenscreen.feather "
+            "must not be negative."
+        )
+
     if not settings.printer.name.strip():
         raise ConfigurationError(
             "printer.name must not be empty."
         )
-

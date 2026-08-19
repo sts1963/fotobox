@@ -15,7 +15,7 @@ from app.services.photo_session import (
 from app.services.session_manager import (
     SessionManager,
 )
-
+from app.services.background import BackgroundProcessor
 
 class FakeCamera:
     """Minimal camera double for session tests."""
@@ -60,11 +60,14 @@ async def test_capture_and_collage_sequence(
         session_manager=manager,
         camera_service=camera,  # type: ignore[arg-type]
         collage_generator=collage_generator,
+        background_processor=BackgroundProcessor(),
         event_bus=EventBus(),
         session_root=tmp_path,
         logo_path=(
-            tmp_path / "missing-logo.png"
+            tmp_path / "missing-logo.png"    
         ),
+        background_enabled=False,
+        background_images=(),
         countdown_seconds=1,
         photo_count=3,
         interval_seconds=0,
@@ -89,7 +92,11 @@ async def test_capture_and_collage_sequence(
         manager.session.photos
     ) == 3
 
-    await service._create_collage()
+    photo_paths = await service._prepare_photos()
+
+    await service._create_collage(
+        photo_paths
+    )
 
     assert (
         manager.state

@@ -6,6 +6,7 @@ from app.services.photo_session import PhotoSessionService
 from app.services.session_manager import SessionManager
 from app.services.diagnostics import DiagnosticService
 from pathlib import Path
+from app.services.background import BackgroundProcessor
 
 settings = load_settings()
 
@@ -33,14 +34,28 @@ collage_generator = CollageGenerator(
     jpeg_quality=settings.collage.jpeg_quality,
 )
 
+background_processor = BackgroundProcessor(
+    hue_min=settings.background.greenscreen.hue_min,
+    hue_max=settings.background.greenscreen.hue_max,
+    saturation_min=(
+        settings.background.greenscreen.saturation_min
+    ),
+    value_min=(
+        settings.background.greenscreen.value_min
+    ),
+    feather=settings.background.greenscreen.feather,
+)
 
 photo_session_service = PhotoSessionService(
     session_manager=session_manager,
     camera_service=camera_service,
     collage_generator=collage_generator,
+    background_processor=background_processor,
     event_bus=event_bus,
     session_root=settings.session.root,
     logo_path=settings.collage.logo,
+    background_enabled=settings.background.enabled,
+    background_images=settings.background.images,
     countdown_seconds=(
         settings.session.countdown_seconds
     ),
