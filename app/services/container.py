@@ -7,6 +7,9 @@ from app.services.session_manager import SessionManager
 from app.services.diagnostics import DiagnosticService
 from pathlib import Path
 from app.services.background import BackgroundProcessor
+from app.services.background_library import (
+    BackgroundLibraryService,
+)
 
 settings = load_settings()
 
@@ -44,6 +47,14 @@ background_processor = BackgroundProcessor(
         settings.background.greenscreen.value_min
     ),
     feather=settings.background.greenscreen.feather,
+)
+
+background_library_service = (
+    BackgroundLibraryService(
+        background_directory=(
+            settings.background.images[0].parent
+        ),
+    )
 )
 
 photo_session_service = PhotoSessionService(

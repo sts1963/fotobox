@@ -177,9 +177,6 @@ class PhotoSessionService:
                 photo_paths
             )
 
-            await self._capture_photos()
-            await self._create_collage()
-
         except asyncio.CancelledError:
             if countdown is not None:
                 await countdown.cancel()

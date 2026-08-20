@@ -27,7 +27,7 @@ collage:
   jpeg_quality: 95
   logo: "assets/logo.png"
 background:
-  enabled: false
+  enabled: true
   mode: "greenscreen"
 
   images:
@@ -36,11 +36,11 @@ background:
     - "assets/backgrounds/background_03.jpg"
 
   greenscreen:
-    hue_min: 35
-    hue_max: 90
-    saturation_min: 60
-    value_min: 40
-    feather: 5
+    hue_min: 25
+    hue_max: 105
+    saturation_min: 35
+    value_min: 5
+    feather: 3
 
 printer:
   enabled: false

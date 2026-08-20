@@ -11,6 +11,14 @@ from fastapi import (
 
 from app.services.container import (
     diagnostic_service,
+    background_library_service,
+)
+
+from pydantic import BaseModel
+
+from fastapi import (
+    UploadFile,
+    File,
 )
 
 router = APIRouter(
@@ -109,3 +117,87 @@ async def admin_shutdown(
         "status": "accepted",
         "message": "System shutdown requested.",
     }
+
+class BackgroundSelection(
+    BaseModel
+):
+    filename: str
+
+@router.get(
+    "/backgrounds"
+)
+def admin_backgrounds() -> dict:
+    """Return available virtual backgrounds."""
+
+    return {
+        "items": (
+            background_library_service
+            .list_backgrounds()
+        ),
+    }
+
+@router.post(
+    "/backgrounds/upload"
+)
+async def upload_background(
+    file: UploadFile = File(...),
+) -> dict[str, str]:
+    """Upload one virtual background."""
+
+    data = await file.read(
+        background_library_service
+        .MAX_UPLOAD_BYTES
+        + 1
+    )
+
+    try:
+        filename = (
+            background_library_service
+            .save_upload(
+                file.filename
+                or "background.jpg",
+                data,
+            )
+        )
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    return {
+        "filename": filename,
+    }
+
+@router.post(
+    "/backgrounds/select/{slot}"
+)
+def select_background(
+    slot: int,
+    selection: BackgroundSelection,
+) -> dict[str, str]:
+    """Assign one background to a photo slot."""
+
+    try:
+        path = (
+            background_library_service
+            .select_background(
+                slot=slot,
+                filename=selection.filename,
+            )
+        )
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    return {
+        "slot": str(slot),
+        "filename": selection.filename,
+        "active_path": str(path),
+    }
+
+

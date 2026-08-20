@@ -102,11 +102,11 @@ class BackgroundProcessor:
         )
 
         green_mask = cv2.morphologyEx(
-            green_mask,
-            cv2.MORPH_OPEN,
-            kernel,
+           green_mask,
+           cv2.MORPH_CLOSE,
+           kernel,
+           iterations=2,
         )
-
         green_mask = cv2.morphologyEx(
             green_mask,
             cv2.MORPH_CLOSE,
