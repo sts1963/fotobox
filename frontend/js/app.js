@@ -1,228 +1,391 @@
-const connectionStatus =
-    document.getElementById("connection-status");
+var connectionStatus =
+    document.getElementById(
+        "connection-status"
+    );
 
-const startButton =
-    document.getElementById("start-button");
+var startButton =
+    document.getElementById(
+        "start-button"
+    );
 
-const startScreen =
-    document.getElementById("start-screen");
+var startScreen =
+    document.getElementById(
+        "start-screen"
+    );
 
-const countdownScreen =
-    document.getElementById("countdown-screen");
+var countdownScreen =
+    document.getElementById(
+        "countdown-screen"
+    );
 
-const countdownElement =
-    document.getElementById("countdown");
+var countdownElement =
+    document.getElementById(
+        "countdown"
+    );
 
-const captureScreen =
-    document.getElementById("capture-screen");
+var captureScreen =
+    document.getElementById(
+        "capture-screen"
+    );
 
-const processingScreen =
-    document.getElementById("processing-screen");
+var processingScreen =
+    document.getElementById(
+        "processing-screen"
+    );
 
-const previewScreen =
-    document.getElementById("preview-screen");
+var previewScreen =
+    document.getElementById(
+        "preview-screen"
+    );
 
-const collagePreview =
-    document.getElementById("collage-preview");
+var collagePreview =
+    document.getElementById(
+        "collage-preview"
+    );
 
-const captureStatus =
-    document.getElementById("capture-status");
+var captureStatus =
+    document.getElementById(
+        "capture-status"
+    );
 
-const captureTitle =
+var captureTitle =
     document.getElementById(
         "capture-title"
     );
 
-const capturePhotoContainer =
+var capturePhotoContainer =
     document.getElementById(
         "capture-photo-container"
     );
 
-const capturePhotoPreview =
+var capturePhotoPreview =
     document.getElementById(
         "capture-photo-preview"
     );
 
-const nextPhotoCountdown =
+var nextPhotoCountdown =
     document.getElementById(
         "next-photo-countdown"
     );
 
-const errorScreen =
-    document.getElementById("error-screen");
+var errorScreen =
+    document.getElementById(
+        "error-screen"
+    );
 
-const errorMessage =
-    document.getElementById("error-message");
+var errorMessage =
+    document.getElementById(
+        "error-message"
+    );
 
-const restartButton =
-    document.getElementById("restart-button");
+var restartButton =
+    document.getElementById(
+        "restart-button"
+    );
 
-const previewRestartButton =
-    document.getElementById("preview-restart-button");
+var previewRestartButton =
+    document.getElementById(
+        "preview-restart-button"
+    );
 
-const printButton =
-    document.getElementById("print-button");
+var printButton =
+    document.getElementById(
+        "print-button"
+    );
 
-const cameraStream =
-    document.getElementById("camera-stream");
+var cameraStream =
+    document.getElementById(
+        "camera-stream"
+    );
+
+
+var socket = null;
+var cameraAvailable = null;
+var cameraStatusTimer = null;
+var serverConnected = false;
+var currentState = null;
+
 
 cameraStream.addEventListener(
     "error",
-    () => {
+    function () {
         console.log(
             "Camera stream interrupted."
         );
     }
 );
 
-let socket = null;
-let cameraAvailable = null;
-let cameraStatusTimer = null;
-let serverConnected = false;
-let currentState = null;
 
 function restartCameraStream() {
-    const cameraStream =
-        document.getElementById("camera-stream");
+    var stream =
+        document.getElementById(
+            "camera-stream"
+        );
 
-    if (!cameraStream) {
+    if (!stream) {
         return;
     }
 
-    /*
-     * The timestamp forces Safari to create a new
-     * HTTP connection instead of reusing the old
-     * interrupted MJPEG request.
-     */
-    cameraStream.src =
-        `/api/camera/stream?v=${Date.now()}`;
+    stream.src =
+        "/api/camera/stream?v="
+        + Date.now();
 }
 
 
-async function checkCameraStatus() {
-    try {
-        const response = await fetch(
-            "/api/camera/status",
-            {
-                cache: "no-store",
-            }
-        );
+function requestJson(
+    method,
+    url,
+    data,
+    success,
+    failure
+) {
+    var request =
+        new XMLHttpRequest();
 
-        if (!response.ok) {
-            return;
-        }
+    request.open(
+        method,
+        url,
+        true
+    );
 
-        const status = await response.json();
+    request.setRequestHeader(
+        "Cache-Control",
+        "no-cache"
+    );
 
-        const wasAvailable =
-            cameraAvailable;
-
-        cameraAvailable =
-            status.available === true;
-        updateReadyState();
-       
-        /*
-         * Camera has recovered:
-         *
-         * false -> true
-         *
-         * Reconnect the MJPEG stream.
-         */
-        if (
-            wasAvailable === false &&
-            cameraAvailable === true
-        ) {
-            console.log(
-                "Camera recovered. Restarting stream."
-            );
-
-            restartCameraStream();
-        }
-
-    } catch (error) {
-         cameraAvailable = false;
-         updateReadyState(); 
-        
-         console.error(
-            "Unable to read camera status:",
-            error
+    if (data !== null) {
+        request.setRequestHeader(
+            "Content-Type",
+            "application/json"
         );
     }
+
+    request.onreadystatechange =
+        function () {
+            if (
+                request.readyState !== 4
+            ) {
+                return;
+            }
+
+            if (
+                request.status >= 200
+                && request.status < 300
+            ) {
+                var result = null;
+
+                try {
+                    result =
+                        JSON.parse(
+                            request.responseText
+                        );
+                } catch (error) {
+                    if (failure) {
+                        failure(
+                            "Invalid JSON response"
+                        );
+                    }
+
+                    return;
+                }
+
+                if (success) {
+                    success(
+                        result
+                    );
+                }
+
+                return;
+            }
+
+            if (failure) {
+                failure(
+                    "HTTP "
+                    + request.status
+                );
+            }
+        };
+
+    request.onerror =
+        function () {
+            if (failure) {
+                failure(
+                    "Network error"
+                );
+            }
+        };
+
+    if (data !== null) {
+        request.send(
+            JSON.stringify(
+                data
+            )
+        );
+    } else {
+        request.send();
+    }
+}
+
+
+function checkCameraStatus() {
+    requestJson(
+        "GET",
+        "/api/camera/status?v="
+            + Date.now(),
+        null,
+
+        function (status) {
+            var wasAvailable =
+                cameraAvailable;
+
+            cameraAvailable =
+                status.available === true;
+
+            updateReadyState();
+
+            if (
+                wasAvailable === false
+                && cameraAvailable === true
+            ) {
+                console.log(
+                    "Camera recovered. "
+                    + "Restarting stream."
+                );
+
+                restartCameraStream();
+            }
+        },
+
+        function (error) {
+            cameraAvailable = false;
+
+            updateReadyState();
+
+            console.log(
+                "Unable to read camera status: "
+                + error
+            );
+        }
+    );
 }
 
 
 function startCameraStatusMonitor() {
-    if (cameraStatusTimer !== null) {
+    if (
+        cameraStatusTimer !== null
+    ) {
         return;
     }
 
     checkCameraStatus();
 
-    cameraStatusTimer = window.setInterval(
-        checkCameraStatus,
-        2000
-    );
+    cameraStatusTimer =
+        window.setInterval(
+            checkCameraStatus,
+            2000
+        );
 }
 
-function setConnected(connected) {
-    serverConnected = connected;
+
+function setConnected(
+    connected
+) {
+    serverConnected =
+        connected;
+
     updateReadyState();
 }
+
 
 function updateReadyState() {
     if (!serverConnected) {
         connectionStatus.textContent =
             "Verbindung getrennt";
 
-        startButton.disabled = true;
+        startButton.disabled =
+            true;
+
         return;
     }
 
-    if (cameraAvailable !== true) {
+    if (
+        cameraAvailable !== true
+    ) {
         connectionStatus.textContent =
             "Kamera nicht verfügbar";
 
-        startButton.disabled = true;
+        startButton.disabled =
+            true;
+
         return;
     }
 
-    connectionStatus.textContent = "Bereit";
+    connectionStatus.textContent =
+        "Bereit";
+
     startButton.disabled =
         currentState !== "start";
 }
 
+
 function hideSessionScreens() {
-    startScreen.classList.add("hidden");
-    countdownScreen.classList.add("hidden");
-    captureScreen.classList.add("hidden");
-    processingScreen.classList.add("hidden");
-    previewScreen.classList.add("hidden");
-    errorScreen.classList.add("hidden");
+    startScreen.classList.add(
+        "hidden"
+    );
+
+    countdownScreen.classList.add(
+        "hidden"
+    );
+
+    captureScreen.classList.add(
+        "hidden"
+    );
+
+    processingScreen.classList.add(
+        "hidden"
+    );
+
+    previewScreen.classList.add(
+        "hidden"
+    );
+
+    errorScreen.classList.add(
+        "hidden"
+    );
 }
 
 
-function sendCommand(type) {
+function sendCommand(
+    type
+) {
     if (
-        !socket ||
-        socket.readyState !== WebSocket.OPEN
+        !socket
+        || socket.readyState
+            !== WebSocket.OPEN
     ) {
         return;
     }
 
     socket.send(
         JSON.stringify({
-            type: type,
+            type: type
         })
     );
 }
 
 
-function updateState(message) {
-    const state = message.state;
-    currentState = state;
+function updateState(
+    message
+) {
+    var state =
+        message.state;
+
+    currentState =
+        state;
+
     console.log(
-        "Fotobox state:",
-        state
+        "Fotobox state: "
+        + state
     );
 
     hideSessionScreens();
@@ -234,8 +397,9 @@ function updateState(message) {
                 "hidden"
             );
 
-           updateReadyState(); 
-           break;
+            updateReadyState();
+
+            break;
 
 
         case "countdown":
@@ -243,9 +407,15 @@ function updateState(message) {
                 "hidden"
             );
 
-            startButton.disabled = true;
+            startButton.disabled =
+                true;
 
-            if (message.countdown !== null) {
+            if (
+                message.countdown
+                !== null
+                && message.countdown
+                !== undefined
+            ) {
                 countdownElement.textContent =
                     message.countdown;
             }
@@ -253,82 +423,102 @@ function updateState(message) {
             break;
 
 
-case "capturing": {
-    captureScreen.classList.remove(
-        "hidden"
-    );
-
-    startButton.disabled = true;
-
-    const captured =
-        Array.isArray(message.photos)
-            ? message.photos.length
-            : 0;
-
-    const nextPhoto =
-        Math.min(
-            captured + 1,
-            3
-        );
-
-    capturePhotoContainer.classList.add(
-        "hidden"
-    );
-
-    nextPhotoCountdown.classList.add(
-        "hidden"
-    );
-
-    if (
-        message.capture_phase === "preview"
-        && message.preview_photo !== null
-    ) {
-        captureTitle.textContent =
-            `Foto ${message.preview_photo} aufgenommen`;
-
-        captureStatus.textContent =
-            "So sieht es aus:";
-
-        const sessionId =
-            encodeURIComponent(
-                message.session_id
+        case "capturing":
+            captureScreen.classList.remove(
+                "hidden"
             );
 
-        capturePhotoPreview.src =
-            `/api/session/${sessionId}/photo/`
-            + `${message.preview_photo}`
-            + `?v=${Date.now()}`;
+            startButton.disabled =
+                true;
 
-        capturePhotoContainer.classList.remove(
-            "hidden"
-        );
+            var captured = 0;
 
-    } else if (
-        message.capture_phase === "waiting"
-    ) {
-        captureTitle.textContent =
-            "Bereit machen";
+            if (
+                Array.isArray(
+                    message.photos
+                )
+            ) {
+                captured =
+                    message.photos.length;
+            }
 
-        captureStatus.textContent =
-            `Foto ${nextPhoto} von 3`;
+            var nextPhoto =
+                Math.min(
+                    captured + 1,
+                    3
+                );
 
-        nextPhotoCountdown.textContent =
-            message.next_photo_in;
+            capturePhotoContainer.classList.add(
+                "hidden"
+            );
 
-        nextPhotoCountdown.classList.remove(
-            "hidden"
-        );
+            nextPhotoCountdown.classList.add(
+                "hidden"
+            );
 
-    } else {
-        captureTitle.textContent =
-            "Aufnahme läuft";
+            if (
+                message.capture_phase
+                    === "preview"
+                && message.preview_photo
+                    !== null
+                && message.preview_photo
+                    !== undefined
+            ) {
+                captureTitle.textContent =
+                    "Foto "
+                    + message.preview_photo
+                    + " aufgenommen";
 
-        captureStatus.textContent =
-            `Foto ${nextPhoto} von 3`;
-    }
+                captureStatus.textContent =
+                    "So sieht es aus:";
 
-    break;
-}
+                var previewSessionId =
+                    encodeURIComponent(
+                        message.session_id
+                    );
+
+                capturePhotoPreview.src =
+                    "/api/session/"
+                    + previewSessionId
+                    + "/photo/"
+                    + message.preview_photo
+                    + "?v="
+                    + Date.now();
+
+                capturePhotoContainer.classList.remove(
+                    "hidden"
+                );
+
+            } else if (
+                message.capture_phase
+                    === "waiting"
+            ) {
+                captureTitle.textContent =
+                    "Bereit machen";
+
+                captureStatus.textContent =
+                    "Foto "
+                    + nextPhoto
+                    + " von 3";
+
+                nextPhotoCountdown.textContent =
+                    message.next_photo_in;
+
+                nextPhotoCountdown.classList.remove(
+                    "hidden"
+                );
+
+            } else {
+                captureTitle.textContent =
+                    "Aufnahme läuft";
+
+                captureStatus.textContent =
+                    "Foto "
+                    + nextPhoto
+                    + " von 3";
+            }
+
+            break;
 
 
         case "processing":
@@ -336,37 +526,38 @@ case "capturing": {
                 "hidden"
             );
 
-            startButton.disabled = true;
+            startButton.disabled =
+                true;
+
             break;
 
 
-        case "preview": {
+        case "preview":
             previewScreen.classList.remove(
                 "hidden"
             );
 
-            startButton.disabled = true;
+            startButton.disabled =
+                true;
 
-            const sessionId =
+            var collageSessionId =
                 encodeURIComponent(
                     message.session_id
                 );
 
-            /*
-             * The session ID already makes the URL unique.
-             * The timestamp additionally prevents Safari from
-             * showing an old cached preview during development.
-             */
             collagePreview.src =
-                `/api/session/${sessionId}/collage`
-                + `?v=${Date.now()}`;
+                "/api/session/"
+                + collageSessionId
+                + "/collage?v="
+                + Date.now();
 
             break;
-        }
 
 
         case "printing":
-            startButton.disabled = true;
+            startButton.disabled =
+                true;
+
             break;
 
 
@@ -375,11 +566,20 @@ case "capturing": {
                 "hidden"
             );
 
-            startButton.disabled = true;
+            startButton.disabled =
+                true;
 
-            errorMessage.textContent =
-                message.error
-                ?? "Unbekannter Fehler";
+            if (
+                message.error !== null
+                && message.error
+                    !== undefined
+            ) {
+                errorMessage.textContent =
+                    message.error;
+            } else {
+                errorMessage.textContent =
+                    "Unbekannter Fehler";
+            }
 
             break;
     }
@@ -387,74 +587,111 @@ case "capturing": {
 
 
 function connectWebSocket() {
-    const protocol =
-        window.location.protocol === "https:"
-            ? "wss:"
-            : "ws:";
+    var protocol =
+        window.location.protocol
+            === "https:"
+        ? "wss:"
+        : "ws:";
 
-    const url =
-        `${protocol}//${window.location.host}/ws`;
+    var url =
+        protocol
+        + "//"
+        + window.location.host
+        + "/ws";
 
-    socket = new WebSocket(url);
+    try {
+        socket =
+            new WebSocket(
+                url
+            );
+
+    } catch (error) {
+        setConnected(
+            false
+        );
+
+        window.setTimeout(
+            connectWebSocket,
+            2000
+        );
+
+        return;
+    }
+
+    socket.onopen =
+        function () {
+            setConnected(
+                true
+            );
+        };
 
 
-    socket.addEventListener(
-        "open",
-        () => {
-            setConnected(true);
-        }
-    );
+    socket.onmessage =
+        function (event) {
+            var message;
 
+            try {
+                message =
+                    JSON.parse(
+                        event.data
+                    );
+            } catch (error) {
+                console.log(
+                    "Invalid WebSocket message."
+                );
 
-    socket.addEventListener(
-        "message",
-        (event) => {
-            const message =
-                JSON.parse(event.data);
+                return;
+            }
 
-            switch (message.type) {
+            switch (
+                message.type
+            ) {
 
                 case "state":
-                    updateState(message);
+                    updateState(
+                        message
+                    );
+
                     break;
 
                 case "error":
-                    console.error(
+                    console.log(
                         message.message
                     );
+
                     break;
             }
-        }
-    );
+        };
 
 
-    socket.addEventListener(
-        "close",
-        () => {
-            setConnected(false);
+    socket.onclose =
+        function () {
+            setConnected(
+                false
+            );
 
-            startButton.disabled = true;
+            startButton.disabled =
+                true;
 
             window.setTimeout(
                 connectWebSocket,
                 2000
             );
-        }
-    );
+        };
 
 
-    socket.addEventListener(
-        "error",
-        () => {
-            setConnected(false);
-        }
-    );
+    socket.onerror =
+        function () {
+            setConnected(
+                false
+            );
+        };
 }
 
 
 startButton.addEventListener(
     "click",
-    () => {
+    function () {
         sendCommand(
             "start_session"
         );
@@ -464,7 +701,7 @@ startButton.addEventListener(
 
 restartButton.addEventListener(
     "click",
-    () => {
+    function () {
         sendCommand(
             "restart"
         );
@@ -474,7 +711,7 @@ restartButton.addEventListener(
 
 previewRestartButton.addEventListener(
     "click",
-    () => {
+    function () {
         sendCommand(
             "restart"
         );
@@ -484,10 +721,9 @@ previewRestartButton.addEventListener(
 
 /*
  * Printing is intentionally not implemented yet.
- * The button remains disabled until the CUPS/SELPHY
- * integration is available.
  */
-printButton.disabled = true;
+printButton.disabled =
+    true;
 
 
 connectWebSocket();
