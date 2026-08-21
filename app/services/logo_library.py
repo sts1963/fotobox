@@ -281,19 +281,16 @@ class LogoLibraryService:
         if not self.active_logo_path.is_file():
             return None
 
-        active_hash = self._file_hash(
-            self.active_logo_path
-        )
-
         for filename in self.list_logos():
             path = (
                 self.logo_directory
                 / filename
             )
 
-            if self._file_hash(
-                path
-            ) == active_hash:
+            if self._same_image(
+                self.active_logo_path,
+                path,
+            ):
                 return filename
 
         return None
@@ -333,6 +330,39 @@ class LogoLibraryService:
             path,
         )
 
+    @staticmethod
+    def _same_image(
+        first: Path,
+        second: Path,
+    ) -> bool:
+        """Return whether two image files contain the same pixels."""
+
+        try:
+            with Image.open(first) as first_image:
+                first_image.load()
+
+                first_rgba = first_image.convert(
+                    "RGBA"
+                )
+
+            with Image.open(second) as second_image:
+                second_image.load()
+
+                second_rgba = second_image.convert(
+                    "RGBA"
+                )
+
+        except Exception:
+            return False
+
+        if first_rgba.size != second_rgba.size:
+            return False
+
+        return (
+            first_rgba.tobytes()
+            == second_rgba.tobytes()
+        )
+ 
     @staticmethod
     def _file_hash(
         path: Path,

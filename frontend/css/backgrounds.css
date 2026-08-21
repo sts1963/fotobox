@@ -393,3 +393,38 @@ button:hover {
 .switch input:checked + .slider {
     background: #2f7d46;
 }
+.library-item-wrapper {
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 0.5rem;
+
+    padding: 0.5rem;
+
+    border: 2px solid transparent;
+    border-radius: 0.75rem;
+}
+
+.active-library-item {
+    border-color: currentColor;
+}
+
+.active-badge {
+    font-weight: 700;
+    text-align: center;
+}
+
+.delete-library-item {
+    width: 100%;
+
+    padding: 0.6rem;
+
+    cursor: pointer;
+}
+
+.delete-library-item:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}

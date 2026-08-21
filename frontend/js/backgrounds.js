@@ -74,6 +74,8 @@ const greenscreenEnabled =
     );
 
 let selectedFilename = null;
+let activeBackgrounds = {};
+let activeLogo = null;
 
 async function loadBackgroundSettings() {
     const response = await fetch(
@@ -245,6 +247,39 @@ async function selectLogo(
     refreshActiveLogo();
 }
 
+async function deleteLogo(
+    filename
+) {
+    const confirmed = confirm(
+        `Logo "${filename}" wirklich löschen?`
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    const response = await fetch(
+        "/api/admin/logos/"
+        + encodeURIComponent(filename),
+        {
+            method: "DELETE",
+        }
+    );
+
+    if (!response.ok) {
+        const data =
+            await response.json();
+
+        alert(
+            data.detail
+            ?? "Logo konnte nicht gelöscht werden."
+        );
+
+        return;
+    }
+
+    await loadLogoLibrary();
+}
 
 async function loadLogoLibrary() {
     const response = await fetch(
@@ -265,6 +300,9 @@ async function loadLogoLibrary() {
     const data =
         await response.json();
 
+    activeLogo =
+        data.active ?? null;
+
     logoLibrary.replaceChildren();
 
     if (data.items.length === 0) {
@@ -278,15 +316,23 @@ async function loadLogoLibrary() {
         const filename
         of data.items
     ) {
-        const button =
+        const item =
+            document.createElement(
+                "div"
+            );
+
+        item.className =
+            "library-item-wrapper";
+
+        const selectButton =
             document.createElement(
                 "button"
             );
 
-        button.type =
+        selectButton.type =
             "button";
 
-        button.className =
+        selectButton.className =
             "library-item";
 
         const image =
@@ -310,22 +356,85 @@ async function loadLogoLibrary() {
         caption.textContent =
             filename;
 
-        button.append(
+        selectButton.append(
             image,
             caption
         );
 
-        button.addEventListener(
+        const isActive =
+            filename === activeLogo;
+
+        if (isActive) {
+            item.classList.add(
+                "active-library-item"
+            );
+
+            const badge =
+                document.createElement(
+                    "div"
+                );
+
+            badge.className =
+                "active-badge";
+
+            badge.textContent =
+                "AKTIV";
+
+            item.appendChild(
+                badge
+            );
+        }
+
+        selectButton.addEventListener(
+            "click",
+            async () => {
+                await selectLogo(
+                    filename
+                );
+
+                await loadLogoLibrary();
+            }
+        );
+
+        const deleteButton =
+            document.createElement(
+                "button"
+            );
+
+        deleteButton.type =
+            "button";
+
+        deleteButton.className =
+            "delete-library-item";
+
+        deleteButton.textContent =
+            "Löschen";
+
+        deleteButton.disabled =
+            isActive;
+
+        if (isActive) {
+            deleteButton.title =
+                "Das aktive Logo kann "
+                + "nicht gelöscht werden.";
+        }
+
+        deleteButton.addEventListener(
             "click",
             () => {
-                selectLogo(
+                deleteLogo(
                     filename
                 );
             }
         );
 
+        item.append(
+            selectButton,
+            deleteButton
+        );
+
         logoLibrary.appendChild(
-            button
+            item
         );
     }
 }
@@ -384,6 +493,39 @@ logoUploadForm.addEventListener(
     }
 );
 
+async function deleteBackground(
+    filename
+) {
+    const confirmed = confirm(
+        `Hintergrund "${filename}" wirklich löschen?`
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    const response = await fetch(
+        "/api/admin/backgrounds/"
+        + encodeURIComponent(filename),
+        {
+            method: "DELETE",
+        }
+    );
+
+    if (!response.ok) {
+        const data =
+            await response.json();
+
+        alert(
+            data.detail
+            ?? "Hintergrund konnte nicht gelöscht werden."
+        );
+
+        return;
+    }
+
+    await loadLibrary();
+}
 
 async function loadLibrary() {
     const response = await fetch(
@@ -403,21 +545,39 @@ async function loadLibrary() {
     const data =
         await response.json();
 
+    activeBackgrounds =
+        data.active ?? {};
+
     library.replaceChildren();
+
+    if (data.items.length === 0) {
+        library.textContent =
+            "Noch keine Hintergründe vorhanden.";
+
+        return;
+    }
 
     for (
         const filename
         of data.items
     ) {
-        const button =
+        const item =
+            document.createElement(
+                "div"
+            );
+
+        item.className =
+            "library-item-wrapper";
+
+        const selectButton =
             document.createElement(
                 "button"
             );
 
-        button.type =
+        selectButton.type =
             "button";
 
-        button.className =
+        selectButton.className =
             "library-item";
 
         const image =
@@ -441,12 +601,51 @@ async function loadLibrary() {
         caption.textContent =
             filename;
 
-        button.append(
+        selectButton.append(
             image,
             caption
         );
 
-        button.addEventListener(
+        const activeSlots =
+            Object.entries(
+                activeBackgrounds
+            )
+            .filter(
+                ([slot, activeFilename]) =>
+                    activeFilename === filename
+            )
+            .map(
+                ([slot]) => slot
+            );
+
+        const isActive =
+            activeSlots.length > 0;
+
+        if (isActive) {
+            item.classList.add(
+                "active-library-item"
+            );
+
+            const badge =
+                document.createElement(
+                    "div"
+                );
+
+            badge.className =
+                "active-badge";
+
+            badge.textContent =
+                "AKTIV: Foto "
+                + activeSlots.join(
+                    ", "
+                );
+
+            item.appendChild(
+                badge
+            );
+        }
+
+        selectButton.addEventListener(
             "click",
             () => {
                 openSelection(
@@ -455,12 +654,48 @@ async function loadLibrary() {
             }
         );
 
+        const deleteButton =
+            document.createElement(
+                "button"
+            );
+
+        deleteButton.type =
+            "button";
+
+        deleteButton.className =
+            "delete-library-item";
+
+        deleteButton.textContent =
+            "Löschen";
+
+        deleteButton.disabled =
+            isActive;
+
+        if (isActive) {
+            deleteButton.title =
+                "Ein verwendeter Hintergrund "
+                + "kann nicht gelöscht werden.";
+        }
+
+        deleteButton.addEventListener(
+            "click",
+            () => {
+                deleteBackground(
+                    filename
+                );
+            }
+        );
+
+        item.append(
+            selectButton,
+            deleteButton
+        );
+
         library.appendChild(
-            button
+            item
         );
     }
 }
-
 
 async function selectBackground(
     slot
@@ -499,6 +734,8 @@ async function selectBackground(
         slot,
         selectedFilename
     );
+
+    await loadLibrary();
 
     selectionDialog.close();
 }
