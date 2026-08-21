@@ -28,6 +28,26 @@ const collagePreview =
 const captureStatus =
     document.getElementById("capture-status");
 
+const captureTitle =
+    document.getElementById(
+        "capture-title"
+    );
+
+const capturePhotoContainer =
+    document.getElementById(
+        "capture-photo-container"
+    );
+
+const capturePhotoPreview =
+    document.getElementById(
+        "capture-photo-preview"
+    );
+
+const nextPhotoCountdown =
+    document.getElementById(
+        "next-photo-countdown"
+    );
+
 const errorScreen =
     document.getElementById("error-screen");
 
@@ -233,29 +253,82 @@ function updateState(message) {
             break;
 
 
-        case "capturing": {
-            captureScreen.classList.remove(
-                "hidden"
+case "capturing": {
+    captureScreen.classList.remove(
+        "hidden"
+    );
+
+    startButton.disabled = true;
+
+    const captured =
+        Array.isArray(message.photos)
+            ? message.photos.length
+            : 0;
+
+    const nextPhoto =
+        Math.min(
+            captured + 1,
+            3
+        );
+
+    capturePhotoContainer.classList.add(
+        "hidden"
+    );
+
+    nextPhotoCountdown.classList.add(
+        "hidden"
+    );
+
+    if (
+        message.capture_phase === "preview"
+        && message.preview_photo !== null
+    ) {
+        captureTitle.textContent =
+            `Foto ${message.preview_photo} aufgenommen`;
+
+        captureStatus.textContent =
+            "So sieht es aus:";
+
+        const sessionId =
+            encodeURIComponent(
+                message.session_id
             );
 
-            startButton.disabled = true;
+        capturePhotoPreview.src =
+            `/api/session/${sessionId}/photo/`
+            + `${message.preview_photo}`
+            + `?v=${Date.now()}`;
 
-            const captured =
-                Array.isArray(message.photos)
-                    ? message.photos.length
-                    : 0;
+        capturePhotoContainer.classList.remove(
+            "hidden"
+        );
 
-            const nextPhoto =
-                Math.min(
-                    captured + 1,
-                    3
-                );
+    } else if (
+        message.capture_phase === "waiting"
+    ) {
+        captureTitle.textContent =
+            "Bereit machen";
 
-            captureStatus.textContent =
-                `Foto ${nextPhoto} von 3`;
+        captureStatus.textContent =
+            `Foto ${nextPhoto} von 3`;
 
-            break;
-        }
+        nextPhotoCountdown.textContent =
+            message.next_photo_in;
+
+        nextPhotoCountdown.classList.remove(
+            "hidden"
+        );
+
+    } else {
+        captureTitle.textContent =
+            "Aufnahme läuft";
+
+        captureStatus.textContent =
+            `Foto ${nextPhoto} von 3`;
+    }
+
+    break;
+}
 
 
         case "processing":

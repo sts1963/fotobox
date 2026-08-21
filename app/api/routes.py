@@ -1,7 +1,10 @@
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import (
+    FileResponse,
+    StreamingResponse,
+)
 
 from app.services.container import (
     camera_service,
@@ -10,7 +13,9 @@ from app.services.container import (
 from app.services.stream import mjpeg_stream
 
 
-router = APIRouter(prefix="/api")
+router = APIRouter(
+    prefix="/api"
+)
 
 
 @router.get("/health")
@@ -28,7 +33,9 @@ def camera_stream() -> StreamingResponse:
     """Return the live camera stream."""
 
     return StreamingResponse(
-        mjpeg_stream(camera_service),
+        mjpeg_stream(
+            camera_service
+        ),
         media_type=(
             "multipart/x-mixed-replace; "
             "boundary=frame"
@@ -41,17 +48,30 @@ def camera_status() -> dict:
     """Return the current camera status."""
 
     return {
-        "state": camera_service.state.value,
-        "available": camera_service.available,
+        "state": (
+            camera_service.state.value
+        ),
+        "available": (
+            camera_service.available
+        ),
         "last_frame_at": (
-            camera_service.last_frame_at.isoformat()
-            if camera_service.last_frame_at is not None
+            camera_service
+            .last_frame_at
+            .isoformat()
+            if (
+                camera_service
+                .last_frame_at
+                is not None
+            )
             else None
         ),
         "consecutive_errors": (
-            camera_service.consecutive_errors
+            camera_service
+            .consecutive_errors
         ),
-        "last_error": camera_service.last_error,
+        "last_error": (
+            camera_service.last_error
+        ),
     }
 
 
@@ -59,9 +79,13 @@ def camera_status() -> dict:
 def test_photo() -> dict:
     """Capture a test photo using the running camera service."""
 
-    output = Path("/tmp/fotobox-test.jpg")
+    output = Path(
+        "/tmp/fotobox-test.jpg"
+    )
 
-    camera_service.capture_photo(output)
+    camera_service.capture_photo(
+        output
+    )
 
     return {
         "success": True,
@@ -70,13 +94,69 @@ def test_photo() -> dict:
     }
 
 
-@router.get("/session/{session_id}/collage")
+@router.get(
+    "/session/{session_id}/photo/{number}"
+)
+def session_photo(
+    session_id: str,
+    number: int,
+) -> FileResponse:
+    """Return one captured photo of the current session."""
+
+    session = (
+        session_manager.session
+    )
+
+    if session.id != session_id:
+        raise HTTPException(
+            status_code=404,
+            detail="Session not found.",
+        )
+
+    if (
+        number < 1
+        or number > len(session.photos)
+    ):
+        raise HTTPException(
+            status_code=404,
+            detail="Photo not available.",
+        )
+
+    photo_path = Path(
+        session.photos[
+            number - 1
+        ]
+    )
+
+    if (
+        not photo_path.exists()
+        or not photo_path.is_file()
+    ):
+        raise HTTPException(
+            status_code=404,
+            detail="Photo file not found.",
+        )
+
+    return FileResponse(
+        photo_path,
+        media_type="image/jpeg",
+        headers={
+            "Cache-Control": "no-store",
+        },
+    )
+
+
+@router.get(
+    "/session/{session_id}/collage"
+)
 def session_collage(
     session_id: str,
 ) -> FileResponse:
     """Return the collage belonging to the current session."""
 
-    session = session_manager.session
+    session = (
+        session_manager.session
+    )
 
     if session.id != session_id:
         raise HTTPException(
@@ -110,4 +190,3 @@ def session_collage(
             "Cache-Control": "no-store",
         },
     )
-

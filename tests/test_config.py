@@ -27,7 +27,7 @@ session:
   root: "data/sessions"
   countdown_seconds: 5
   photo_count: 3
-  interval_seconds: 3
+  interval_seconds: 5
 
 collage:
   width: 1800
@@ -95,7 +95,7 @@ session:
   root: "data/sessions"
   countdown_seconds: 5
   photo_count: 4
-  interval_seconds: 3
+  interval_seconds: 5
 
 collage:
   width: 1800

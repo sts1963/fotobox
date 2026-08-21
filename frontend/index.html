@@ -28,7 +28,7 @@
 
     <link
         rel="stylesheet"
-        href="/static/css/app.css?v=8"
+        href="/static/css/app.css?v=9"
     >
 </head>
 
@@ -79,20 +79,37 @@
     </section>
 
 
-    <section
-        id="capture-screen"
-        class="hidden"
-    >
-        <div class="session-message">
+<section
+    id="capture-screen"
+    class="hidden"
+>
+    <div class="session-message">
 
-            <h2>Aufnahme läuft</h2>
+        <h2 id="capture-title">
+            Aufnahme läuft
+        </h2>
 
-            <p id="capture-status">
-                Foto 1 von 3
-            </p>
-
+        <div
+            id="capture-photo-container"
+            class="capture-photo-container hidden"
+        >
+            <img
+                id="capture-photo-preview"
+                alt="Gerade aufgenommenes Foto"
+            >
         </div>
-    </section>
+
+        <p id="capture-status">
+            Foto 1 von 3
+        </p>
+
+        <div
+            id="next-photo-countdown"
+            class="next-photo-countdown hidden"
+        ></div>
+
+    </div>
+</section>
 
 
     <section
@@ -170,7 +187,7 @@
 
 </main>
 
-<script src="/static/js/app.js?v=8"></script>
+<script src="/static/js/app.js?v=9"></script>
 
 </body>
 </html>

@@ -269,6 +269,10 @@ class PhotoSessionService:
             SessionCommand.COUNTDOWN_FINISHED
         )
 
+        self.session_manager.set_capture_feedback(
+            phase="capturing",
+        )
+
         logger.info(
             "Countdown finished: session_id=%s",
             self.session_manager.session.id,
@@ -296,6 +300,12 @@ class PhotoSessionService:
             1,
             self.photo_count + 1,
         ):
+            self.session_manager.set_capture_feedback(
+                phase="capturing",
+            )
+
+            await self._publish_state()
+
             filename = (
                 session_directory
                 / f"photo_{number:02d}.jpg"
@@ -318,12 +328,56 @@ class PhotoSessionService:
                 str(filename)
             )
 
-            await self._publish_state()
-
             if number < self.photo_count:
-                await asyncio.sleep(
-                    self.interval_seconds
+                #
+                # Show the captured photo for two seconds.
+                #
+                self.session_manager.set_capture_feedback(
+                    phase="preview",
+                    preview_photo=number,
                 )
+
+                await self._publish_state()
+
+                preview_seconds = min(
+                    2.0,
+                    self.interval_seconds,
+                )
+
+                await asyncio.sleep(
+                    preview_seconds
+                )
+
+                #
+                # Use the remaining interval as a visible
+                # countdown for the next photo.
+                #
+                remaining_seconds = max(
+                    0,
+                    int(
+                        round(
+                            self.interval_seconds
+                            - preview_seconds
+                        )
+                    ),
+                )
+
+                for remaining in range(
+                    remaining_seconds,
+                    0,
+                    -1,
+                ):
+                    self.session_manager.set_capture_feedback(
+                        phase="waiting",
+                        next_photo_in=remaining,
+                    )
+
+                    await self._publish_state()
+
+                    await asyncio.sleep(1)
+
+            else:
+                await self._publish_state()
 
         self.session_manager.handle(
             SessionCommand.ALL_PHOTOS_CAPTURED

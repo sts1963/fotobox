@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+import hashlib
 import io
 import logging
 import re
@@ -272,3 +272,85 @@ class LogoLibraryService:
             temporary_path.unlink(
                 missing_ok=True
             )
+
+    def active_logo_name(
+        self,
+    ) -> str | None:
+        """Return the library filename of the active logo."""
+
+        if not self.active_logo_path.is_file():
+            return None
+
+        active_hash = self._file_hash(
+            self.active_logo_path
+        )
+
+        for filename in self.list_logos():
+            path = (
+                self.logo_directory
+                / filename
+            )
+
+            if self._file_hash(
+                path
+            ) == active_hash:
+                return filename
+
+        return None
+
+    def delete_logo(
+        self,
+        filename: str,
+    ) -> None:
+        """Delete one unused logo."""
+
+        safe_filename = Path(
+            filename
+        ).name
+
+        if (
+            safe_filename
+            == self.active_logo_name()
+        ):
+            raise LogoLibraryError(
+                "The active logo cannot be deleted."
+            )
+
+        path = (
+            self.logo_directory
+            / safe_filename
+        )
+
+        if not path.is_file():
+            raise LogoLibraryError(
+                f"Logo does not exist: {filename}"
+            )
+
+        path.unlink()
+
+        logger.info(
+            "Logo deleted: %s",
+            path,
+        )
+
+    @staticmethod
+    def _file_hash(
+        path: Path,
+    ) -> str:
+        """Return SHA-256 hash of a file."""
+
+        digest = hashlib.sha256()
+
+        with path.open(
+            "rb"
+        ) as file:
+            for block in iter(
+                lambda: file.read(65536),
+                b"",
+            ):
+                digest.update(
+                    block
+                )
+
+        return digest.hexdigest()
+

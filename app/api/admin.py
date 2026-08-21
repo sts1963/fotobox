@@ -64,6 +64,29 @@ def admin_logs(
         "lines": lines,
     }
 
+@router.delete(
+    "/logos/{filename}"
+)
+def delete_logo(
+    filename: str,
+) -> dict[str, str]:
+    """Delete one unused logo."""
+
+    try:
+        logo_library_service.delete_logo(
+            filename
+        )
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    return {
+        "status": "deleted",
+        "filename": filename,
+    }
 
 def _poweroff_system() -> None:
     """Power off the Raspberry Pi."""
@@ -148,6 +171,29 @@ def admin_backgrounds() -> dict:
         ),
     }
 
+@router.delete(
+    "/backgrounds/{filename}"
+)
+def delete_background(
+    filename: str,
+) -> dict[str, str]:
+    """Delete one unused background."""
+
+    try:
+        background_library_service.delete_background(
+            filename
+        )
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    return {
+        "status": "deleted",
+        "filename": filename,
+    }
 
 @router.post(
     "/backgrounds/upload"

@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+import hashlib
 import io
 import logging
 import re
@@ -240,3 +240,108 @@ class BackgroundLibraryService:
             temporary_path.unlink(
                 missing_ok=True
             )
+
+    def active_backgrounds(
+        self,
+    ) -> dict[int, str | None]:
+        """Return the library image assigned to each slot."""
+
+        result: dict[int, str | None] = {}
+
+        library_files = {
+            path.name: path
+            for path in self.library_directory.glob(
+                "*.jpg"
+            )
+        }
+
+        for slot in (
+            1,
+            2,
+            3,
+        ):
+            active_path = (
+                self.background_directory
+                / f"background_{slot:02d}.jpg"
+            )
+
+            if not active_path.is_file():
+                result[slot] = None
+                continue
+
+            active_hash = self._file_hash(
+                active_path
+            )
+
+            result[slot] = None
+
+            for (
+                filename,
+                library_path,
+            ) in library_files.items():
+                if (
+                    self._file_hash(
+                        library_path
+                    )
+                    == active_hash
+                ):
+                    result[slot] = filename
+                    break
+
+        return result
+
+    def delete_background(
+        self,
+        filename: str,
+    ) -> None:
+        """Delete an unused image from the library."""
+
+        safe_filename = Path(
+            filename
+        ).name
+
+        path = (
+            self.library_directory
+            / safe_filename
+        )
+
+        if not path.is_file():
+            raise BackgroundLibraryError(
+                f"Background does not exist: {filename}"
+            )
+
+        active = self.active_backgrounds()
+
+        if safe_filename in active.values():
+            raise BackgroundLibraryError(
+                "An active background cannot be deleted."
+            )
+
+        path.unlink()
+
+        logger.info(
+            "Background deleted: %s",
+            path,
+        )
+
+    @staticmethod
+    def _file_hash(
+        path: Path,
+    ) -> str:
+        """Return SHA-256 hash of a file."""
+
+        digest = hashlib.sha256()
+
+        with path.open(
+            "rb"
+        ) as file:
+            for block in iter(
+                lambda: file.read(65536),
+                b"",
+            ):
+                digest.update(
+                    block
+                )
+
+        return digest.hexdigest()
+
