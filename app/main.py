@@ -164,6 +164,16 @@ async def backgrounds() -> FileResponse:
         / "backgrounds.html"
     )
 
+@app.get(
+    "/settings",
+    include_in_schema=False,
+)
+async def settings_page() -> FileResponse:
+    """Serve the Fotobox settings administration."""
+
+    return FileResponse(
+        FRONTEND_DIR / "settings.html"
+    )
 
 @app.get(
     "/active-logo",

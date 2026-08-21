@@ -18,6 +18,7 @@ from app.services.container import (
     diagnostic_service,
     logo_library_service,
     photo_session_service,
+    settings_admin_service,
 )
 
 
@@ -41,6 +42,35 @@ class LogoSelection(BaseModel):
 class BackgroundModeUpdate(BaseModel):
     enabled: bool
 
+class GreenscreenSettingsUpdate(
+    BaseModel
+):
+    hue_min: int
+    hue_max: int
+    saturation_min: int
+    value_min: int
+    feather: int
+
+
+class SessionSettingsUpdate(
+    BaseModel
+):
+    countdown_seconds: int
+    interval_seconds: float
+
+
+class BackgroundSettingsUpdate(
+    BaseModel
+):
+    enabled: bool
+    greenscreen: GreenscreenSettingsUpdate
+
+
+class FotoboxSettingsUpdate(
+    BaseModel
+):
+    session: SessionSettingsUpdate
+    background: BackgroundSettingsUpdate
 
 @router.get("/status")
 def admin_status() -> dict:
@@ -374,3 +404,72 @@ def select_logo(
         "filename": selection.filename,
         "active_path": str(path),
     }
+@router.get(
+    "/settings"
+)
+def admin_settings() -> dict:
+    """Return editable Fotobox settings."""
+
+    return (
+        settings_admin_service
+        .snapshot()
+    )
+
+
+@router.put(
+    "/settings"
+)
+def update_admin_settings(
+    update: FotoboxSettingsUpdate,
+) -> dict:
+    """Validate, save and apply Fotobox settings."""
+
+    try:
+        return (
+            settings_admin_service
+            .update(
+                countdown_seconds=(
+                    update.session
+                    .countdown_seconds
+                ),
+                interval_seconds=(
+                    update.session
+                    .interval_seconds
+                ),
+                background_enabled=(
+                    update.background
+                    .enabled
+                ),
+                hue_min=(
+                    update.background
+                    .greenscreen
+                    .hue_min
+                ),
+                hue_max=(
+                    update.background
+                    .greenscreen
+                    .hue_max
+                ),
+                saturation_min=(
+                    update.background
+                    .greenscreen
+                    .saturation_min
+                ),
+                value_min=(
+                    update.background
+                    .greenscreen
+                    .value_min
+                ),
+                feather=(
+                    update.background
+                    .greenscreen
+                    .feather
+                ),
+            )
+        )
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc

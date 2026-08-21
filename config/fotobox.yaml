@@ -1,48 +1,35 @@
 camera:
-  device: "/dev/video0"
-  width: 1280
-  height: 720
-  fps: 30
-  jpeg_quality: 80
-
-camera:
-  device: "/dev/video0"
+  device: /dev/video0
   width: 1280
   height: 720
   fps: 30
   jpeg_quality: 80
   retry_interval: 2.0
-
 session:
-  root: "data/sessions"
+  root: data/sessions
   countdown_seconds: 5
   photo_count: 3
-  interval_seconds: 5
-
+  interval_seconds: 5.0
 collage:
   width: 1800
   height: 1200
   margin: 24
   gap: 24
   jpeg_quality: 95
-  logo: "assets/logo.png"
+  logo: assets/logo.png
 background:
-  enabled: true
-  mode: "greenscreen"
-
+  enabled: false
+  mode: greenscreen
   images:
-    - "assets/backgrounds/background_01.jpg"
-    - "assets/backgrounds/background_02.jpg"
-    - "assets/backgrounds/background_03.jpg"
-
+  - assets/backgrounds/background_01.jpg
+  - assets/backgrounds/background_02.jpg
+  - assets/backgrounds/background_03.jpg
   greenscreen:
     hue_min: 25
     hue_max: 105
     saturation_min: 35
     value_min: 5
     feather: 3
-
 printer:
   enabled: false
-  name: "fotobox"
-
+  name: fotobox

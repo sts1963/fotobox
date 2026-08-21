@@ -1,0 +1,172 @@
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    background: #f4f5f7;
+    color: #202124;
+}
+
+body {
+    padding: 32px;
+}
+
+.admin-page {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.admin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 30px;
+}
+
+.admin-header h1 {
+    margin: 0;
+    font-size: 32px;
+}
+
+.admin-header p {
+    margin: 4px 0 0;
+    color: #666;
+}
+
+.admin-header a {
+    color: #2457a7;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.settings-card {
+    margin-bottom: 24px;
+    padding: 24px;
+
+    background: #fff;
+
+    border-radius: 12px;
+
+    box-shadow:
+        0 1px 4px
+        rgba(0, 0, 0, 0.12);
+}
+
+.settings-card h2 {
+    margin-top: 0;
+    margin-bottom: 22px;
+}
+
+.settings-card h3 {
+    margin-top: 30px;
+    margin-bottom: 12px;
+
+    color: #555;
+    font-size: 16px;
+}
+
+.setting-row {
+    min-height: 54px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 24px;
+
+    border-top: 1px solid #eee;
+}
+
+.setting-row:first-of-type {
+    border-top: none;
+}
+
+.setting-row label {
+    font-weight: 500;
+}
+
+.setting-row input[type="number"] {
+    width: 100px;
+
+    padding: 8px;
+
+    border: 1px solid #bbb;
+    border-radius: 6px;
+
+    font-size: 16px;
+}
+
+.setting-row input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+}
+
+.settings-actions {
+    display: flex;
+    justify-content: flex-end;
+
+    margin-top: 20px;
+}
+
+.settings-actions button {
+    padding: 12px 24px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: #2457a7;
+    color: white;
+
+    font-size: 16px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.settings-actions button:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.settings-message {
+    min-height: 24px;
+    margin: 12px 0;
+
+    font-weight: 600;
+}
+
+.settings-message.success {
+    color: #287a3d;
+}
+
+.settings-message.error {
+    color: #b3261e;
+}
+
+@media (max-width: 600px) {
+
+    body {
+        padding: 16px;
+    }
+
+    .setting-row {
+        align-items: flex-start;
+        flex-direction: column;
+
+        gap: 8px;
+
+        padding: 12px 0;
+    }
+}

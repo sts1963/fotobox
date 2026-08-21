@@ -1,142 +1,306 @@
-const library =
+var library =
     document.getElementById(
         "background-library"
     );
 
-const uploadForm =
+var uploadForm =
     document.getElementById(
         "upload-form"
     );
 
-const uploadFile =
+var uploadFile =
     document.getElementById(
         "upload-file"
     );
 
-const uploadStatus =
+var uploadStatus =
     document.getElementById(
         "upload-status"
     );
 
-const selectionDialog =
+var selectionDialog =
     document.getElementById(
         "selection-dialog"
     );
 
-const selectionPreview =
+var selectionPreview =
     document.getElementById(
         "selection-preview"
     );
 
-const selectionTitle =
+var selectionTitle =
     document.getElementById(
         "selection-title"
     );
 
-const selectionCancel =
+var selectionCancel =
     document.getElementById(
         "selection-cancel"
     );
 
-const logoLibrary =
+var logoLibrary =
     document.getElementById(
         "logo-library"
     );
 
-const activeLogoImage =
+var activeLogoImage =
     document.getElementById(
         "active-logo-image"
     );
 
-const activeLogoStatus =
+var activeLogoStatus =
     document.getElementById(
         "active-logo-status"
     );
 
-const logoUploadForm =
+var logoUploadForm =
     document.getElementById(
         "logo-upload-form"
     );
 
-const logoUploadFile =
+var logoUploadFile =
     document.getElementById(
         "logo-upload-file"
     );
 
-const logoUploadStatus =
+var logoUploadStatus =
     document.getElementById(
         "logo-upload-status"
     );
 
-const greenscreenEnabled =
+var greenscreenEnabled =
     document.getElementById(
         "greenscreen-enabled"
     );
 
-let selectedFilename = null;
-let activeBackgrounds = {};
-let activeLogo = null;
 
-async function loadBackgroundSettings() {
-    const response = await fetch(
-        "/api/admin/backgrounds/settings",
-        {
-            cache: "no-store",
-        }
+var selectedFilename = null;
+var activeBackgrounds = {};
+var activeLogo = null;
+
+
+/*
+ * Generic JSON request helper for iOS 9.
+ */
+function requestJson(
+    method,
+    url,
+    data,
+    success,
+    failure
+) {
+    var request =
+        new XMLHttpRequest();
+
+    request.open(
+        method,
+        url,
+        true
     );
 
-    if (!response.ok) {
-        return;
+    request.setRequestHeader(
+        "Cache-Control",
+        "no-cache"
+    );
+
+    if (data !== null) {
+        request.setRequestHeader(
+            "Content-Type",
+            "application/json"
+        );
     }
 
-    const data =
-        await response.json();
+    request.onreadystatechange =
+        function () {
+            if (
+                request.readyState !== 4
+            ) {
+                return;
+            }
 
-    greenscreenEnabled.checked =
-        data.enabled === true;
+            var result = null;
+
+            if (
+                request.responseText
+            ) {
+                try {
+                    result =
+                        JSON.parse(
+                            request.responseText
+                        );
+                } catch (error) {
+                    if (failure) {
+                        failure(
+                            "Ungültige Serverantwort."
+                        );
+                    }
+
+                    return;
+                }
+            }
+
+            if (
+                request.status >= 200
+                && request.status < 300
+            ) {
+                if (success) {
+                    success(
+                        result
+                    );
+                }
+
+                return;
+            }
+
+            if (failure) {
+                var message =
+                    "HTTP "
+                    + request.status;
+
+                if (
+                    result
+                    && result.detail
+                ) {
+                    message =
+                        result.detail;
+                }
+
+                failure(
+                    message
+                );
+            }
+        };
+
+    request.onerror =
+        function () {
+            if (failure) {
+                failure(
+                    "Netzwerkfehler."
+                );
+            }
+        };
+
+    if (data !== null) {
+        request.send(
+            JSON.stringify(
+                data
+            )
+        );
+    } else {
+        request.send();
+    }
 }
 
 
-greenscreenEnabled.addEventListener(
-    "change",
-    async () => {
-        const enabled =
-            greenscreenEnabled.checked;
+/*
+ * Multipart upload helper.
+ */
+function uploadFileRequest(
+    url,
+    file,
+    success,
+    failure
+) {
+    var formData =
+        new FormData();
 
-        const response = await fetch(
-            "/api/admin/backgrounds/settings",
-            {
-                method: "POST",
+    formData.append(
+        "file",
+        file
+    );
 
-                headers: {
-                    "Content-Type":
-                        "application/json",
-                },
+    var request =
+        new XMLHttpRequest();
 
-                body: JSON.stringify({
-                    enabled: enabled,
-                }),
+    request.open(
+        "POST",
+        url,
+        true
+    );
+
+    request.onreadystatechange =
+        function () {
+            if (
+                request.readyState !== 4
+            ) {
+                return;
             }
-        );
 
-        if (!response.ok) {
-            greenscreenEnabled.checked =
-                !enabled;
+            var result = null;
 
-            alert(
-                "Greenscreen-Einstellung "
-                + "konnte nicht geändert werden."
-            );
-        }
-    }
-);
+            if (
+                request.responseText
+            ) {
+                try {
+                    result =
+                        JSON.parse(
+                            request.responseText
+                        );
+                } catch (error) {
+                    if (failure) {
+                        failure(
+                            "Ungültige Serverantwort."
+                        );
+                    }
+
+                    return;
+                }
+            }
+
+            if (
+                request.status >= 200
+                && request.status < 300
+            ) {
+                if (success) {
+                    success(
+                        result
+                    );
+                }
+
+                return;
+            }
+
+            if (failure) {
+                var message =
+                    "Upload fehlgeschlagen.";
+
+                if (
+                    result
+                    && result.detail
+                ) {
+                    message =
+                        result.detail;
+                }
+
+                failure(
+                    message
+                );
+            }
+        };
+
+    request.onerror =
+        function () {
+            if (failure) {
+                failure(
+                    "Netzwerkfehler beim Upload."
+                );
+            }
+        };
+
+    request.send(
+        formData
+    );
+}
+
 
 function libraryImageUrl(
     filename
 ) {
     return (
         "/background-assets/library/"
-        + encodeURIComponent(filename)
+        + encodeURIComponent(
+            filename
+        )
         + "?v="
         + Date.now()
     );
@@ -147,8 +311,24 @@ function activeImageUrl(
     slot
 ) {
     return (
-        `/background-assets/background_0${slot}.jpg`
-        + `?v=${Date.now()}`
+        "/background-assets/background_0"
+        + slot
+        + ".jpg?v="
+        + Date.now()
+    );
+}
+
+
+function logoImageUrl(
+    filename
+) {
+    return (
+        "/logo-assets/"
+        + encodeURIComponent(
+            filename
+        )
+        + "?v="
+        + Date.now()
     );
 }
 
@@ -157,21 +337,66 @@ function refreshSlot(
     slot,
     filename
 ) {
-    const image =
+    var image =
         document.getElementById(
-            `slot-image-${slot}`
+            "slot-image-" + slot
         );
 
-    const name =
+    var name =
         document.getElementById(
-            `slot-name-${slot}`
+            "slot-name-" + slot
         );
 
     image.src =
-        activeImageUrl(slot);
+        activeImageUrl(
+            slot
+        );
 
     name.textContent =
         filename;
+}
+
+
+/*
+ * Native <dialog> is not available reliably
+ * on Safari / iOS 9.
+ */
+function showSelectionDialog() {
+    if (
+        selectionDialog.showModal
+        && typeof selectionDialog.showModal
+            === "function"
+    ) {
+        selectionDialog.showModal();
+        return;
+    }
+
+    selectionDialog.setAttribute(
+        "open",
+        "open"
+    );
+
+    selectionDialog.style.display =
+        "block";
+}
+
+
+function closeSelectionDialog() {
+    if (
+        selectionDialog.close
+        && typeof selectionDialog.close
+            === "function"
+    ) {
+        selectionDialog.close();
+        return;
+    }
+
+    selectionDialog.removeAttribute(
+        "open"
+    );
+
+    selectionDialog.style.display =
+        "none";
 }
 
 
@@ -189,18 +414,7 @@ function openSelection(
             filename
         );
 
-    selectionDialog.showModal();
-}
-
-function logoImageUrl(
-    filename
-) {
-    return (
-        "/logo-assets/"
-        + encodeURIComponent(filename)
-        + "?v="
-        + Date.now()
-    );
+    showSelectionDialog();
 }
 
 
@@ -217,610 +431,688 @@ function refreshActiveLogo() {
 }
 
 
-async function selectLogo(
-    filename
-) {
-    const response = await fetch(
-        "/api/admin/logos/select",
-        {
-            method: "POST",
+function loadBackgroundSettings() {
+    requestJson(
+        "GET",
+        "/api/admin/backgrounds/settings?v="
+            + Date.now(),
+        null,
 
-            headers: {
-                "Content-Type":
-                    "application/json",
+        function (data) {
+            greenscreenEnabled.checked =
+                data.enabled === true;
+        },
+
+        function () {
+            /* Keep current UI state. */
+        }
+    );
+}
+
+
+greenscreenEnabled.addEventListener(
+    "change",
+    function () {
+        var enabled =
+            greenscreenEnabled.checked;
+
+        requestJson(
+            "POST",
+            "/api/admin/backgrounds/settings",
+            {
+                enabled: enabled
             },
 
-            body: JSON.stringify({
-                filename: filename,
-            }),
-        }
-    );
+            function (data) {
+                greenscreenEnabled.checked =
+                    data.enabled === true;
+            },
 
-    if (!response.ok) {
-        alert(
-            "Logo konnte nicht ausgewählt werden."
-        );
+            function (error) {
+                greenscreenEnabled.checked =
+                    !enabled;
 
-        return;
-    }
-
-    refreshActiveLogo();
-}
-
-async function deleteLogo(
-    filename
-) {
-    const confirmed = confirm(
-        `Logo "${filename}" wirklich löschen?`
-    );
-
-    if (!confirmed) {
-        return;
-    }
-
-    const response = await fetch(
-        "/api/admin/logos/"
-        + encodeURIComponent(filename),
-        {
-            method: "DELETE",
-        }
-    );
-
-    if (!response.ok) {
-        const data =
-            await response.json();
-
-        alert(
-            data.detail
-            ?? "Logo konnte nicht gelöscht werden."
-        );
-
-        return;
-    }
-
-    await loadLogoLibrary();
-}
-
-async function loadLogoLibrary() {
-    const response = await fetch(
-        "/api/admin/logos",
-        {
-            cache: "no-store",
-        }
-    );
-
-    if (!response.ok) {
-        logoLibrary.textContent =
-            "Logo-Bibliothek konnte nicht "
-            + "geladen werden.";
-
-        return;
-    }
-
-    const data =
-        await response.json();
-
-    activeLogo =
-        data.active ?? null;
-
-    logoLibrary.replaceChildren();
-
-    if (data.items.length === 0) {
-        logoLibrary.textContent =
-            "Noch keine Logos vorhanden.";
-
-        return;
-    }
-
-    for (
-        const filename
-        of data.items
-    ) {
-        const item =
-            document.createElement(
-                "div"
-            );
-
-        item.className =
-            "library-item-wrapper";
-
-        const selectButton =
-            document.createElement(
-                "button"
-            );
-
-        selectButton.type =
-            "button";
-
-        selectButton.className =
-            "library-item";
-
-        const image =
-            document.createElement(
-                "img"
-            );
-
-        image.src =
-            logoImageUrl(
-                filename
-            );
-
-        image.alt =
-            filename;
-
-        const caption =
-            document.createElement(
-                "span"
-            );
-
-        caption.textContent =
-            filename;
-
-        selectButton.append(
-            image,
-            caption
-        );
-
-        const isActive =
-            filename === activeLogo;
-
-        if (isActive) {
-            item.classList.add(
-                "active-library-item"
-            );
-
-            const badge =
-                document.createElement(
-                    "div"
-                );
-
-            badge.className =
-                "active-badge";
-
-            badge.textContent =
-                "AKTIV";
-
-            item.appendChild(
-                badge
-            );
-        }
-
-        selectButton.addEventListener(
-            "click",
-            async () => {
-                await selectLogo(
-                    filename
-                );
-
-                await loadLogoLibrary();
-            }
-        );
-
-        const deleteButton =
-            document.createElement(
-                "button"
-            );
-
-        deleteButton.type =
-            "button";
-
-        deleteButton.className =
-            "delete-library-item";
-
-        deleteButton.textContent =
-            "Löschen";
-
-        deleteButton.disabled =
-            isActive;
-
-        if (isActive) {
-            deleteButton.title =
-                "Das aktive Logo kann "
-                + "nicht gelöscht werden.";
-        }
-
-        deleteButton.addEventListener(
-            "click",
-            () => {
-                deleteLogo(
-                    filename
+                window.alert(
+                    "Greenscreen-Einstellung "
+                    + "konnte nicht geändert werden: "
+                    + error
                 );
             }
         );
-
-        item.append(
-            selectButton,
-            deleteButton
-        );
-
-        logoLibrary.appendChild(
-            item
-        );
-    }
-}
-
-logoUploadForm.addEventListener(
-    "submit",
-    async (event) => {
-        event.preventDefault();
-
-        const file =
-            logoUploadFile.files[0];
-
-        if (!file) {
-            return;
-        }
-
-        const formData =
-            new FormData();
-
-        formData.append(
-            "file",
-            file
-        );
-
-        logoUploadStatus.textContent =
-            "Upload läuft …";
-
-        const response = await fetch(
-            "/api/admin/logos/upload",
-            {
-                method: "POST",
-                body: formData,
-            }
-        );
-
-        if (!response.ok) {
-            const data =
-                await response.json();
-
-            logoUploadStatus.textContent =
-                data.detail
-                ?? "Upload fehlgeschlagen.";
-
-            return;
-        }
-
-        const data =
-            await response.json();
-
-        logoUploadStatus.textContent =
-            `Gespeichert als ${data.filename}`;
-
-        logoUploadForm.reset();
-
-        await loadLogoLibrary();
     }
 );
 
-async function deleteBackground(
+
+function selectLogo(
     filename
 ) {
-    const confirmed = confirm(
-        `Hintergrund "${filename}" wirklich löschen?`
+    requestJson(
+        "POST",
+        "/api/admin/logos/select",
+        {
+            filename: filename
+        },
+
+        function () {
+            refreshActiveLogo();
+            loadLogoLibrary();
+        },
+
+        function (error) {
+            window.alert(
+                "Logo konnte nicht ausgewählt werden: "
+                + error
+            );
+        }
     );
+}
+
+
+function deleteLogo(
+    filename
+) {
+    var confirmed =
+        window.confirm(
+            'Logo "'
+            + filename
+            + '" wirklich löschen?'
+        );
 
     if (!confirmed) {
         return;
     }
 
-    const response = await fetch(
-        "/api/admin/backgrounds/"
-        + encodeURIComponent(filename),
-        {
-            method: "DELETE",
+    requestJson(
+        "DELETE",
+        "/api/admin/logos/"
+            + encodeURIComponent(
+                filename
+            ),
+        null,
+
+        function () {
+            loadLogoLibrary();
+        },
+
+        function (error) {
+            window.alert(
+                error
+            );
         }
     );
-
-    if (!response.ok) {
-        const data =
-            await response.json();
-
-        alert(
-            data.detail
-            ?? "Hintergrund konnte nicht gelöscht werden."
-        );
-
-        return;
-    }
-
-    await loadLibrary();
 }
 
-async function loadLibrary() {
-    const response = await fetch(
-        "/api/admin/backgrounds",
-        {
-            cache: "no-store",
+
+function loadLogoLibrary() {
+    requestJson(
+        "GET",
+        "/api/admin/logos?v="
+            + Date.now(),
+        null,
+
+        function (data) {
+            activeLogo =
+                data.active || null;
+
+            while (
+                logoLibrary.firstChild
+            ) {
+                logoLibrary.removeChild(
+                    logoLibrary.firstChild
+                );
+            }
+
+            if (
+                !data.items
+                || data.items.length === 0
+            ) {
+                logoLibrary.textContent =
+                    "Noch keine Logos vorhanden.";
+
+                return;
+            }
+
+            var i;
+
+            for (
+                i = 0;
+                i < data.items.length;
+                i += 1
+            ) {
+                createLogoItem(
+                    data.items[i]
+                );
+            }
+        },
+
+        function () {
+            logoLibrary.textContent =
+                "Logo-Bibliothek konnte "
+                + "nicht geladen werden.";
         }
     );
+}
 
-    if (!response.ok) {
-        library.textContent =
-            "Bibliothek konnte nicht geladen werden.";
 
-        return;
-    }
+function createLogoItem(
+    filename
+) {
+    var item =
+        document.createElement(
+            "div"
+        );
 
-    const data =
-        await response.json();
+    item.className =
+        "library-item-wrapper";
 
-    activeBackgrounds =
-        data.active ?? {};
+    var selectButton =
+        document.createElement(
+            "button"
+        );
 
-    library.replaceChildren();
+    selectButton.type =
+        "button";
 
-    if (data.items.length === 0) {
-        library.textContent =
-            "Noch keine Hintergründe vorhanden.";
+    selectButton.className =
+        "library-item";
 
-        return;
-    }
+    var image =
+        document.createElement(
+            "img"
+        );
 
-    for (
-        const filename
-        of data.items
-    ) {
-        const item =
+    image.src =
+        logoImageUrl(
+            filename
+        );
+
+    image.alt =
+        filename;
+
+    var caption =
+        document.createElement(
+            "span"
+        );
+
+    caption.textContent =
+        filename;
+
+    selectButton.appendChild(
+        image
+    );
+
+    selectButton.appendChild(
+        caption
+    );
+
+    var isActive =
+        filename === activeLogo;
+
+    if (isActive) {
+        item.className +=
+            " active-library-item";
+
+        var badge =
             document.createElement(
                 "div"
             );
 
-        item.className =
-            "library-item-wrapper";
+        badge.className =
+            "active-badge";
 
-        const selectButton =
-            document.createElement(
-                "button"
-            );
+        badge.textContent =
+            "AKTIV";
 
-        selectButton.type =
-            "button";
-
-        selectButton.className =
-            "library-item";
-
-        const image =
-            document.createElement(
-                "img"
-            );
-
-        image.src =
-            libraryImageUrl(
-                filename
-            );
-
-        image.alt =
-            filename;
-
-        const caption =
-            document.createElement(
-                "span"
-            );
-
-        caption.textContent =
-            filename;
-
-        selectButton.append(
-            image,
-            caption
-        );
-
-        const activeSlots =
-            Object.entries(
-                activeBackgrounds
-            )
-            .filter(
-                ([slot, activeFilename]) =>
-                    activeFilename === filename
-            )
-            .map(
-                ([slot]) => slot
-            );
-
-        const isActive =
-            activeSlots.length > 0;
-
-        if (isActive) {
-            item.classList.add(
-                "active-library-item"
-            );
-
-            const badge =
-                document.createElement(
-                    "div"
-                );
-
-            badge.className =
-                "active-badge";
-
-            badge.textContent =
-                "AKTIV: Foto "
-                + activeSlots.join(
-                    ", "
-                );
-
-            item.appendChild(
-                badge
-            );
-        }
-
-        selectButton.addEventListener(
-            "click",
-            () => {
-                openSelection(
-                    filename
-                );
-            }
-        );
-
-        const deleteButton =
-            document.createElement(
-                "button"
-            );
-
-        deleteButton.type =
-            "button";
-
-        deleteButton.className =
-            "delete-library-item";
-
-        deleteButton.textContent =
-            "Löschen";
-
-        deleteButton.disabled =
-            isActive;
-
-        if (isActive) {
-            deleteButton.title =
-                "Ein verwendeter Hintergrund "
-                + "kann nicht gelöscht werden.";
-        }
-
-        deleteButton.addEventListener(
-            "click",
-            () => {
-                deleteBackground(
-                    filename
-                );
-            }
-        );
-
-        item.append(
-            selectButton,
-            deleteButton
-        );
-
-        library.appendChild(
-            item
+        item.appendChild(
+            badge
         );
     }
+
+    selectButton.onclick =
+        function () {
+            selectLogo(
+                filename
+            );
+        };
+
+    var deleteButton =
+        document.createElement(
+            "button"
+        );
+
+    deleteButton.type =
+        "button";
+
+    deleteButton.className =
+        "delete-library-item";
+
+    deleteButton.textContent =
+        "Löschen";
+
+    deleteButton.disabled =
+        isActive;
+
+    if (isActive) {
+        deleteButton.title =
+            "Das aktive Logo kann "
+            + "nicht gelöscht werden.";
+    }
+
+    deleteButton.onclick =
+        function () {
+            deleteLogo(
+                filename
+            );
+        };
+
+    item.appendChild(
+        selectButton
+    );
+
+    item.appendChild(
+        deleteButton
+    );
+
+    logoLibrary.appendChild(
+        item
+    );
 }
 
-async function selectBackground(
+
+function deleteBackground(
+    filename
+) {
+    var confirmed =
+        window.confirm(
+            'Hintergrund "'
+            + filename
+            + '" wirklich löschen?'
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    requestJson(
+        "DELETE",
+        "/api/admin/backgrounds/"
+            + encodeURIComponent(
+                filename
+            ),
+        null,
+
+        function () {
+            loadLibrary();
+        },
+
+        function (error) {
+            window.alert(
+                error
+            );
+        }
+    );
+}
+
+
+function getActiveSlots(
+    filename
+) {
+    var slots = [];
+    var key;
+
+    for (
+        key in activeBackgrounds
+    ) {
+        if (
+            activeBackgrounds.hasOwnProperty(
+                key
+            )
+            && activeBackgrounds[key]
+                === filename
+        ) {
+            slots.push(
+                key
+            );
+        }
+    }
+
+    return slots;
+}
+
+
+function loadLibrary() {
+    requestJson(
+        "GET",
+        "/api/admin/backgrounds?v="
+            + Date.now(),
+        null,
+
+        function (data) {
+            activeBackgrounds =
+                data.active || {};
+
+            while (
+                library.firstChild
+            ) {
+                library.removeChild(
+                    library.firstChild
+                );
+            }
+
+            if (
+                !data.items
+                || data.items.length === 0
+            ) {
+                library.textContent =
+                    "Noch keine Hintergründe vorhanden.";
+
+                return;
+            }
+
+            var i;
+
+            for (
+                i = 0;
+                i < data.items.length;
+                i += 1
+            ) {
+                createBackgroundItem(
+                    data.items[i]
+                );
+            }
+        },
+
+        function () {
+            library.textContent =
+                "Bibliothek konnte nicht "
+                + "geladen werden.";
+        }
+    );
+}
+
+
+function createBackgroundItem(
+    filename
+) {
+    var item =
+        document.createElement(
+            "div"
+        );
+
+    item.className =
+        "library-item-wrapper";
+
+    var selectButton =
+        document.createElement(
+            "button"
+        );
+
+    selectButton.type =
+        "button";
+
+    selectButton.className =
+        "library-item";
+
+    var image =
+        document.createElement(
+            "img"
+        );
+
+    image.src =
+        libraryImageUrl(
+            filename
+        );
+
+    image.alt =
+        filename;
+
+    var caption =
+        document.createElement(
+            "span"
+        );
+
+    caption.textContent =
+        filename;
+
+    selectButton.appendChild(
+        image
+    );
+
+    selectButton.appendChild(
+        caption
+    );
+
+    var activeSlots =
+        getActiveSlots(
+            filename
+        );
+
+    var isActive =
+        activeSlots.length > 0;
+
+    if (isActive) {
+        item.className +=
+            " active-library-item";
+
+        var badge =
+            document.createElement(
+                "div"
+            );
+
+        badge.className =
+            "active-badge";
+
+        badge.textContent =
+            "AKTIV: Foto "
+            + activeSlots.join(
+                ", "
+            );
+
+        item.appendChild(
+            badge
+        );
+    }
+
+    selectButton.onclick =
+        function () {
+            openSelection(
+                filename
+            );
+        };
+
+    var deleteButton =
+        document.createElement(
+            "button"
+        );
+
+    deleteButton.type =
+        "button";
+
+    deleteButton.className =
+        "delete-library-item";
+
+    deleteButton.textContent =
+        "Löschen";
+
+    deleteButton.disabled =
+        isActive;
+
+    if (isActive) {
+        deleteButton.title =
+            "Ein verwendeter Hintergrund "
+            + "kann nicht gelöscht werden.";
+    }
+
+    deleteButton.onclick =
+        function () {
+            deleteBackground(
+                filename
+            );
+        };
+
+    item.appendChild(
+        selectButton
+    );
+
+    item.appendChild(
+        deleteButton
+    );
+
+    library.appendChild(
+        item
+    );
+}
+
+
+function selectBackground(
     slot
 ) {
     if (!selectedFilename) {
         return;
     }
 
-    const response = await fetch(
-        `/api/admin/backgrounds/select/${slot}`,
+    requestJson(
+        "POST",
+        "/api/admin/backgrounds/select/"
+            + slot,
         {
-            method: "POST",
+            filename:
+                selectedFilename
+        },
 
-            headers: {
-                "Content-Type":
-                    "application/json",
-            },
+        function () {
+            refreshSlot(
+                slot,
+                selectedFilename
+            );
 
-            body: JSON.stringify({
-                filename:
-                    selectedFilename,
-            }),
-        }
-    );
+            closeSelectionDialog();
 
-    if (!response.ok) {
-        alert(
-            "Hintergrund konnte nicht "
-            + "ausgewählt werden."
-        );
+            loadLibrary();
+        },
 
-        return;
-    }
-
-    refreshSlot(
-        slot,
-        selectedFilename
-    );
-
-    await loadLibrary();
-
-    selectionDialog.close();
-}
-
-
-for (
-    const button
-    of selectionDialog.querySelectorAll(
-        "[data-slot]"
-    )
-) {
-    button.addEventListener(
-        "click",
-        () => {
-            selectBackground(
-                button.dataset.slot
+        function (error) {
+            window.alert(
+                "Hintergrund konnte nicht "
+                + "ausgewählt werden: "
+                + error
             );
         }
     );
 }
 
 
-selectionCancel.addEventListener(
-    "click",
-    () => {
-        selectionDialog.close();
+/*
+ * Slot buttons inside the selection dialog.
+ */
+(function () {
+    var buttons =
+        selectionDialog.querySelectorAll(
+            "[data-slot]"
+        );
+
+    var i;
+
+    for (
+        i = 0;
+        i < buttons.length;
+        i += 1
+    ) {
+        (function (button) {
+            button.onclick =
+                function () {
+                    selectBackground(
+                        button.getAttribute(
+                            "data-slot"
+                        )
+                    );
+                };
+        }(buttons[i]));
     }
-);
+}());
 
 
-uploadForm.addEventListener(
-    "submit",
-    async (event) => {
+selectionCancel.onclick =
+    function () {
+        closeSelectionDialog();
+    };
+
+
+logoUploadForm.onsubmit =
+    function (event) {
         event.preventDefault();
 
-        const file =
+        var file =
+            logoUploadFile.files[0];
+
+        if (!file) {
+            return;
+        }
+
+        logoUploadStatus.textContent =
+            "Upload läuft …";
+
+        uploadFileRequest(
+            "/api/admin/logos/upload",
+            file,
+
+            function (data) {
+                logoUploadStatus.textContent =
+                    "Gespeichert als "
+                    + data.filename;
+
+                logoUploadForm.reset();
+
+                loadLogoLibrary();
+            },
+
+            function (error) {
+                logoUploadStatus.textContent =
+                    error;
+            }
+        );
+    };
+
+
+uploadForm.onsubmit =
+    function (event) {
+        event.preventDefault();
+
+        var file =
             uploadFile.files[0];
 
         if (!file) {
             return;
         }
 
-        const formData =
-            new FormData();
-
-        formData.append(
-            "file",
-            file
-        );
-
         uploadStatus.textContent =
             "Upload läuft …";
 
-        const response = await fetch(
+        uploadFileRequest(
             "/api/admin/backgrounds/upload",
-            {
-                method: "POST",
-                body: formData,
+            file,
+
+            function (data) {
+                uploadStatus.textContent =
+                    "Gespeichert als "
+                    + data.filename;
+
+                uploadForm.reset();
+
+                loadLibrary();
+            },
+
+            function (error) {
+                uploadStatus.textContent =
+                    error;
             }
         );
-
-        if (!response.ok) {
-            const data =
-                await response.json();
-
-            uploadStatus.textContent =
-                data.detail
-                ?? "Upload fehlgeschlagen.";
-
-            return;
-        }
-
-        const data =
-            await response.json();
-
-        uploadStatus.textContent =
-            `Gespeichert als ${data.filename}`;
-
-        uploadForm.reset();
-
-        await loadLibrary();
-    }
-);
+    };
 
 
+/*
+ * Initial load.
+ */
 loadLibrary();
 loadLogoLibrary();
 loadBackgroundSettings();

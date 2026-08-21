@@ -14,6 +14,10 @@ from app.services.logo_library import (
     LogoLibraryService,
 )
 
+from app.services.settings_admin import (
+    SettingsAdminService,
+)
+
 settings = load_settings()
 
 
@@ -87,6 +91,10 @@ photo_session_service = PhotoSessionService(
     interval_seconds=(
         settings.session.interval_seconds
     ),
+)
+settings_admin_service = SettingsAdminService(
+    photo_session_service=photo_session_service,
+    background_processor=background_processor,
 )
 
 diagnostic_service = DiagnosticService(

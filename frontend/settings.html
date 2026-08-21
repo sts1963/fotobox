@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Fotobox – Einstellungen</title>
+
+    <link
+        rel="stylesheet"
+        href="/static/css/admin.css?v=3"
+    >
+</head>
+
+<body>
+
+<main class="admin-page">
+
+    <header class="admin-header">
+        <div>
+            <h1>Fotobox</h1>
+            <p>Einstellungen</p>
+        </div>
+
+        <a href="/console">
+            Zur Konsole
+        </a>
+    </header>
+
+
+    <section class="settings-card">
+
+        <h2>Aufnahme</h2>
+
+        <div class="setting-row">
+            <label for="countdown-seconds">
+                Countdown vor dem ersten Foto
+            </label>
+
+            <div>
+                <input
+                    id="countdown-seconds"
+                    type="number"
+                    min="1"
+                    max="30"
+                >
+                <span>Sekunden</span>
+            </div>
+        </div>
+
+
+        <div class="setting-row">
+            <label for="interval-seconds">
+                Abstand zwischen den Fotos
+            </label>
+
+            <div>
+                <input
+                    id="interval-seconds"
+                    type="number"
+                    min="1"
+                    max="30"
+                    step="0.5"
+                >
+                <span>Sekunden</span>
+            </div>
+        </div>
+
+    </section>
+
+
+    <section class="settings-card">
+
+        <h2>Virtueller Hintergrund</h2>
+
+        <div class="setting-row">
+            <label for="background-enabled">
+                Greenscreen verwenden
+            </label>
+
+            <input
+                id="background-enabled"
+                type="checkbox"
+            >
+        </div>
+
+
+        <h3>Greenscreen-Erkennung</h3>
+
+        <div class="setting-row">
+            <label for="hue-min">
+                Hue Minimum
+            </label>
+
+            <input
+                id="hue-min"
+                type="number"
+                min="0"
+                max="179"
+            >
+        </div>
+
+
+        <div class="setting-row">
+            <label for="hue-max">
+                Hue Maximum
+            </label>
+
+            <input
+                id="hue-max"
+                type="number"
+                min="0"
+                max="179"
+            >
+        </div>
+
+
+        <div class="setting-row">
+            <label for="saturation-min">
+                Sättigung Minimum
+            </label>
+
+            <input
+                id="saturation-min"
+                type="number"
+                min="0"
+                max="255"
+            >
+        </div>
+
+
+        <div class="setting-row">
+            <label for="value-min">
+                Helligkeit Minimum
+            </label>
+
+            <input
+                id="value-min"
+                type="number"
+                min="0"
+                max="255"
+            >
+        </div>
+
+
+        <div class="setting-row">
+            <label for="feather">
+                Kantenweichheit
+            </label>
+
+            <input
+                id="feather"
+                type="number"
+                min="0"
+                max="50"
+            >
+        </div>
+
+    </section>
+
+
+    <div
+        id="settings-message"
+        class="settings-message"
+    ></div>
+
+
+    <div class="settings-actions">
+
+        <button
+            id="save-settings"
+            type="button"
+            disabled
+        >
+            Änderungen speichern
+        </button>
+
+    </div>
+
+</main>
+
+<script src="/static/js/settings.js?v=1"></script>
+
+</body>
+</html>
+
