@@ -1,25 +1,28 @@
+from __future__ import annotations
+
 import logging
 import subprocess
-logger = logging.getLogger(__name__)
 
 from fastapi import (
     APIRouter,
     BackgroundTasks,
+    File,
     HTTPException,
     Request,
+    UploadFile,
 )
-
-from app.services.container import (
-    diagnostic_service,
-    background_library_service,
-)
-
 from pydantic import BaseModel
 
-from fastapi import (
-    UploadFile,
-    File,
+from app.services.container import (
+    background_library_service,
+    diagnostic_service,
+    logo_library_service,
+    photo_session_service,
 )
+
+
+logger = logging.getLogger(__name__)
+
 
 router = APIRouter(
     prefix="/api/admin",
@@ -27,11 +30,24 @@ router = APIRouter(
 )
 
 
+class BackgroundSelection(BaseModel):
+    filename: str
+
+
+class LogoSelection(BaseModel):
+    filename: str
+
+
+class BackgroundModeUpdate(BaseModel):
+    enabled: bool
+
+
 @router.get("/status")
 def admin_status() -> dict:
     """Return the complete Fotobox diagnostic status."""
 
     return diagnostic_service.snapshot()
+
 
 @router.get("/logs")
 def admin_logs(
@@ -47,6 +63,7 @@ def admin_logs(
         "count": len(lines),
         "lines": lines,
     }
+
 
 def _poweroff_system() -> None:
     """Power off the Raspberry Pi."""
@@ -78,7 +95,6 @@ def _poweroff_system() -> None:
     "/shutdown",
     status_code=202,
 )
-
 async def admin_shutdown(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -118,10 +134,6 @@ async def admin_shutdown(
         "message": "System shutdown requested.",
     }
 
-class BackgroundSelection(
-    BaseModel
-):
-    filename: str
 
 @router.get(
     "/backgrounds"
@@ -135,6 +147,7 @@ def admin_backgrounds() -> dict:
             .list_backgrounds()
         ),
     }
+
 
 @router.post(
     "/backgrounds/upload"
@@ -170,6 +183,7 @@ async def upload_background(
         "filename": filename,
     }
 
+
 @router.post(
     "/backgrounds/select/{slot}"
 )
@@ -201,3 +215,116 @@ def select_background(
     }
 
 
+@router.get(
+    "/backgrounds/settings"
+)
+def background_settings() -> dict[str, bool]:
+    """Return current virtual background state."""
+
+    return {
+        "enabled": (
+            photo_session_service
+            .backgrounds_enabled
+        ),
+    }
+
+
+@router.post(
+    "/backgrounds/settings"
+)
+def update_background_settings(
+    update: BackgroundModeUpdate,
+) -> dict[str, bool]:
+    """Enable or disable virtual backgrounds."""
+
+    photo_session_service.set_backgrounds_enabled(
+        update.enabled
+    )
+
+    return {
+        "enabled": (
+            photo_session_service
+            .backgrounds_enabled
+        ),
+    }
+
+
+@router.get(
+    "/logos"
+)
+def admin_logos() -> dict:
+    """Return available and active logo state."""
+
+    return {
+        "items": (
+            logo_library_service
+            .list_logos()
+        ),
+        "active": (
+            logo_library_service
+            .active_logo_exists()
+        ),
+    }
+
+
+@router.post(
+    "/logos/upload"
+)
+async def upload_logo(
+    file: UploadFile = File(...),
+) -> dict[str, str]:
+    """Upload one logo."""
+
+    data = await file.read(
+        logo_library_service
+        .MAX_UPLOAD_BYTES
+        + 1
+    )
+
+    try:
+        filename = (
+            logo_library_service
+            .save_upload(
+                file.filename
+                or "logo.png",
+                data,
+            )
+        )
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    return {
+        "filename": filename,
+    }
+
+
+@router.post(
+    "/logos/select"
+)
+def select_logo(
+    selection: LogoSelection,
+) -> dict[str, str]:
+    """Activate one logo."""
+
+    try:
+        path = (
+            logo_library_service
+            .select_logo(
+                filename=selection.filename,
+            )
+        )
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    return {
+        "filename": selection.filename,
+        "active_path": str(path),
+    }

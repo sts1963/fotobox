@@ -10,6 +10,9 @@ from app.services.background import BackgroundProcessor
 from app.services.background_library import (
     BackgroundLibraryService,
 )
+from app.services.logo_library import (
+    LogoLibraryService,
+)
 
 settings = load_settings()
 
@@ -55,6 +58,16 @@ background_library_service = (
             settings.background.images[0].parent
         ),
     )
+)
+
+logo_library_service = LogoLibraryService(
+    logo_directory=(
+        settings.collage.logo.parent
+        / "logos"
+    ),
+    active_logo_path=(
+        settings.collage.logo
+    ),
 )
 
 photo_session_service = PhotoSessionService(

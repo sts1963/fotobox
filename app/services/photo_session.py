@@ -13,10 +13,12 @@ from app.services.session_manager import (
     InvalidTransitionError,
     SessionManager,
 )
+
 from app.services.background import (
     BackgroundProcessingError,
     BackgroundProcessor,
 )
+
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +63,27 @@ class PhotoSessionService:
         self._start_lock = asyncio.Lock()
 
     @property
+    def backgrounds_enabled(self) -> bool:
+        """Return whether virtual backgrounds are enabled."""
+
+        return self.background_enabled
+
+    def set_backgrounds_enabled(
+        self,
+        enabled: bool,
+    ) -> None:
+        """Enable or disable virtual backgrounds at runtime."""
+
+        self.background_enabled = enabled
+
+        logger.info(
+            "Virtual backgrounds %s",
+            "enabled"
+            if enabled
+            else "disabled",
+        )
+
+    @property
     def running(self) -> bool:
         """Return whether a photo sequence is currently running."""
 
@@ -81,7 +104,8 @@ class PhotoSessionService:
                 )
 
                 logger.error(
-                    "Unable to start photo session: camera is not available"
+                    "Unable to start photo session: "
+                    "camera is not available"
                 )
 
                 await self._publish_state()
@@ -99,7 +123,8 @@ class PhotoSessionService:
                 )
 
                 raise PhotoSessionBusyError(
-                    "The photobooth is not ready for a new session."
+                    "The photobooth is not ready "
+                    "for a new session."
                 ) from exc
 
             logger.info(
@@ -121,7 +146,8 @@ class PhotoSessionService:
 
         if task is not None and not task.done():
             logger.info(
-                "Cancelling running photo session: session_id=%s",
+                "Cancelling running photo session: "
+                "session_id=%s",
                 self.session_manager.session.id,
             )
 
@@ -169,6 +195,7 @@ class PhotoSessionService:
 
             while countdown.running:
                 await asyncio.sleep(0.05)
+
             await self._capture_photos()
 
             photo_paths = await self._prepare_photos()
@@ -195,7 +222,8 @@ class PhotoSessionService:
             InvalidTransitionError,
         ) as exc:
             logger.error(
-                "Photo session failed: session_id=%s error=%s",
+                "Photo session failed: "
+                "session_id=%s error=%s",
                 self.session_manager.session.id,
                 exc,
             )
@@ -208,7 +236,8 @@ class PhotoSessionService:
 
         except Exception as exc:
             logger.exception(
-                "Unexpected photo session error: session_id=%s",
+                "Unexpected photo session error: "
+                "session_id=%s",
                 self.session_manager.session.id,
             )
 
@@ -278,7 +307,8 @@ class PhotoSessionService:
             )
 
             logger.info(
-                "Photo captured: session_id=%s photo=%s path=%s",
+                "Photo captured: "
+                "session_id=%s photo=%s path=%s",
                 session_id,
                 number,
                 filename,
@@ -309,78 +339,80 @@ class PhotoSessionService:
     async def _prepare_photos(
         self,
     ) -> list[Path]:
-       """Return original or background-processed photos."""
+        """Return original or background-processed photos."""
 
-       session = self.session_manager.session
+        session = self.session_manager.session
 
-       original_paths = [
-           Path(filename)
-           for filename in session.photos
-       ]
+        original_paths = [
+            Path(filename)
+            for filename in session.photos
+        ]
 
-       if not self.background_enabled:
-           logger.info(
-               "Virtual backgrounds disabled: session_id=%s",
-               session.id,
-           )
+        if not self.background_enabled:
+            logger.info(
+                "Virtual backgrounds disabled: "
+                "session_id=%s",
+                session.id,
+            )
 
-           return original_paths
+            return original_paths
 
-       if len(self.background_images) != len(
-           original_paths
-       ):
-           raise BackgroundProcessingError(
-               "Number of configured background images "
-               "does not match number of photos."
-           )
+        if len(self.background_images) != len(
+            original_paths
+        ):
+            raise BackgroundProcessingError(
+                "Number of configured background images "
+                "does not match number of photos."
+            )
 
-       logger.info(
-           "Applying virtual backgrounds: session_id=%s",
-           session.id,
-       )
+        logger.info(
+            "Applying virtual backgrounds: "
+            "session_id=%s",
+            session.id,
+        )
 
-       processed_paths: list[Path] = []
+        processed_paths: list[Path] = []
 
-       session_directory = (
-           self.session_root / session.id
-       )
+        session_directory = (
+            self.session_root / session.id
+        )
 
-       for number, (
-           photo_path,
-           background_path,
-       ) in enumerate(
-           zip(
-               original_paths,
-               self.background_images,
-               strict=True,
-           ),
-           start=1,
-       ):
-           output_path = (
-               session_directory
-               / f"processed_{number:02d}.jpg"
-           )
+        for number, (
+            photo_path,
+            background_path,
+        ) in enumerate(
+            zip(
+                original_paths,
+                self.background_images,
+                strict=True,
+            ),
+            start=1,
+        ):
+            output_path = (
+                session_directory
+                / f"processed_{number:02d}.jpg"
+            )
 
-           result = await asyncio.to_thread(
-               self.background_processor.replace_greenscreen,
-               photo_path,
-               background_path,
-               output_path,
-           )
+            result = await asyncio.to_thread(
+                self.background_processor.replace_greenscreen,
+                photo_path,
+                background_path,
+                output_path,
+            )
 
-           processed_paths.append(
-               result
-           )
+            processed_paths.append(
+                result
+            )
 
-           logger.info(
-               "Virtual background applied: "
-               "session_id=%s photo=%s background=%s",
-               session.id,
-               number,
-               background_path,
-           )
+            logger.info(
+                "Virtual background applied: "
+                "session_id=%s photo=%s background=%s",
+                session.id,
+                number,
+                background_path,
+            )
 
-       return processed_paths
+        return processed_paths
 
     async def _create_collage(
         self,
@@ -407,7 +439,8 @@ class PhotoSessionService:
         )
 
         logger.info(
-            "Creating collage: session_id=%s output=%s",
+            "Creating collage: "
+            "session_id=%s output=%s",
             session.id,
             output_path,
         )
@@ -428,7 +461,8 @@ class PhotoSessionService:
         )
 
         logger.info(
-            "Collage created: session_id=%s path=%s",
+            "Collage created: "
+            "session_id=%s path=%s",
             session.id,
             result,
         )
@@ -441,4 +475,3 @@ class PhotoSessionService:
         await self.event_bus.publish(
             self.session_manager.snapshot()
         )
-

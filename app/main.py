@@ -2,7 +2,7 @@ from pathlib import Path
 from contextlib import asynccontextmanager
 import logging
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -14,22 +14,55 @@ from app.services.container import camera_service
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-FRONTEND_DIR = BASE_DIR / "frontend"
-LOG_FILE = BASE_DIR / "data" / "logs" / "fotobox.log"
+
+FRONTEND_DIR = (
+    BASE_DIR
+    / "frontend"
+)
+
+BACKGROUND_DIR = (
+    BASE_DIR
+    / "assets"
+    / "backgrounds"
+)
+
+LOGO_LIBRARY_DIR = (
+    BASE_DIR
+    / "assets"
+    / "logos"
+)
+
+LOG_FILE = (
+    BASE_DIR
+    / "data"
+    / "logs"
+    / "fotobox.log"
+)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application startup and shutdown."""
 
-    configure_logging(LOG_FILE)
-    logger = logging.getLogger(__name__)
+    configure_logging(
+        LOG_FILE
+    )
 
-    logger.info("Fotobox application starting")
+    logger = logging.getLogger(
+        __name__
+    )
+
+    logger.info(
+        "Fotobox application starting"
+    )
 
     try:
         camera_service.start()
-        logger.info("Camera service management started")
+
+        logger.info(
+            "Camera service management started"
+        )
+
     except Exception:
         logger.exception(
             "Camera service failed during startup"
@@ -37,11 +70,15 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    logger.info("Fotobox application shutting down")
+    logger.info(
+        "Fotobox application shutting down"
+    )
 
     camera_service.stop()
 
-    logger.info("Camera service stopped")
+    logger.info(
+        "Camera service stopped"
+    )
 
 
 app = FastAPI(
@@ -53,22 +90,54 @@ app = FastAPI(
 
 app.mount(
     "/static",
-    StaticFiles(directory=FRONTEND_DIR),
+    StaticFiles(
+        directory=FRONTEND_DIR
+    ),
     name="static",
 )
 
-app.include_router(api_router)
-app.include_router(websocket_router)
-app.include_router(admin_router)
+app.mount(
+    "/background-assets",
+    StaticFiles(
+        directory=BACKGROUND_DIR
+    ),
+    name="background-assets",
+)
+
+app.mount(
+    "/logo-assets",
+    StaticFiles(
+        directory=LOGO_LIBRARY_DIR
+    ),
+    name="logo-assets",
+)
 
 
-@app.get("/", include_in_schema=False)
+app.include_router(
+    api_router
+)
+
+app.include_router(
+    websocket_router
+)
+
+app.include_router(
+    admin_router
+)
+
+
+@app.get(
+    "/",
+    include_in_schema=False,
+)
 async def index() -> FileResponse:
     """Serve the frontend application."""
 
     return FileResponse(
-        FRONTEND_DIR / "index.html"
+        FRONTEND_DIR
+        / "index.html"
     )
+
 
 @app.get(
     "/console",
@@ -78,6 +147,43 @@ async def console() -> FileResponse:
     """Serve the local Fotobox service console."""
 
     return FileResponse(
-        FRONTEND_DIR / "console.html"
+        FRONTEND_DIR
+        / "console.html"
     )
 
+
+@app.get(
+    "/backgrounds",
+    include_in_schema=False,
+)
+async def backgrounds() -> FileResponse:
+    """Serve the virtual background administration."""
+
+    return FileResponse(
+        FRONTEND_DIR
+        / "backgrounds.html"
+    )
+
+
+@app.get(
+    "/active-logo",
+    include_in_schema=False,
+)
+async def active_logo() -> FileResponse:
+    """Serve the currently active logo."""
+
+    logo_path = (
+        BASE_DIR
+        / "assets"
+        / "logo.png"
+    )
+
+    if not logo_path.is_file():
+        raise HTTPException(
+            status_code=404,
+            detail="No active logo configured.",
+        )
+
+    return FileResponse(
+        logo_path
+    )
