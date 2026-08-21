@@ -98,7 +98,13 @@ var cameraStream =
         "camera-stream"
     );
 
+var adminButton =
+    document.getElementById(
+        "admin-button"
+    );
 
+var adminHoldTimer = null;
+var adminHoldTriggered = false;
 var socket = null;
 var cameraAvailable = null;
 var cameraStatusTimer = null;
@@ -725,6 +731,137 @@ previewRestartButton.addEventListener(
 printButton.disabled =
     true;
 
+function startAdminHold(
+    event
+) {
+    if (event) {
+        event.preventDefault();
+    }
+
+    adminHoldTriggered =
+        false;
+
+    adminButton.className =
+        "admin-holding";
+
+    adminHoldTimer =
+        window.setTimeout(
+            function () {
+                adminHoldTriggered =
+                    true;
+
+                window.location.href =
+                    "/backgrounds";
+            },
+            2000
+        );
+}
+
+
+function cancelAdminHold(
+    event
+) {
+    if (event) {
+        event.preventDefault();
+    }
+
+    if (
+        adminHoldTimer !== null
+    ) {
+        window.clearTimeout(
+            adminHoldTimer
+        );
+
+        adminHoldTimer =
+            null;
+    }
+
+    adminButton.className =
+        "";
+}
+
+
+/*
+ * Touch events for the iPad.
+ */
+adminButton.addEventListener(
+    "touchstart",
+    function (event) {
+        startAdminHold(
+            event
+        );
+    },
+    false
+);
+
+adminButton.addEventListener(
+    "touchend",
+    function (event) {
+        cancelAdminHold(
+            event
+        );
+    },
+    false
+);
+
+adminButton.addEventListener(
+    "touchcancel",
+    function (event) {
+        cancelAdminHold(
+            event
+        );
+    },
+    false
+);
+
+
+/*
+ * Mouse events for Mac/desktop use.
+ */
+adminButton.addEventListener(
+    "mousedown",
+    function (event) {
+        startAdminHold(
+            event
+        );
+    },
+    false
+);
+
+adminButton.addEventListener(
+    "mouseup",
+    function (event) {
+        cancelAdminHold(
+            event
+        );
+    },
+    false
+);
+
+adminButton.addEventListener(
+    "mouseleave",
+    function (event) {
+        cancelAdminHold(
+            event
+        );
+    },
+    false
+);
+
+
+/*
+ * Prevent the normal link click.
+ * Navigation happens only after the hold timer.
+ */
+adminButton.addEventListener(
+    "click",
+    function (event) {
+        event.preventDefault();
+
+        return false;
+    },
+    false
+);
 
 connectWebSocket();
 startCameraStatusMonitor();

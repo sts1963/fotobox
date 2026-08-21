@@ -134,10 +134,11 @@ async def index() -> FileResponse:
     """Serve the frontend application."""
 
     return FileResponse(
-        FRONTEND_DIR
-        / "index.html"
+        FRONTEND_DIR / "index.html",
+        headers={
+            "Cache-Control": "no-store",
+        },
     )
-
 
 @app.get(
     "/console",

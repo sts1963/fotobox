@@ -622,3 +622,43 @@ button:hover {
 .greenscreen-settings .slider {
     display: none !important;
 }
+.admin-nav {
+    display: flex;
+
+    gap: 10px;
+
+    margin-bottom: 24px;
+}
+
+.admin-nav a {
+    display: inline-block;
+
+    padding: 10px 16px;
+
+    border-radius: 8px;
+
+    background: #e7e9ee;
+    color: #202124;
+
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.admin-nav a.active {
+    background: #2457a7;
+    color: white;
+}
+
+@media (max-width: 600px) {
+    .admin-nav {
+        display: block;
+    }
+
+    .admin-nav a {
+        display: block;
+
+        margin-bottom: 8px;
+
+        text-align: center;
+    }
+}
