@@ -100,8 +100,8 @@ var printStatus =
 var printerStatusTimer = null;
 var printFinishedTimer = null;
 var printerReady = false;
-
 var printConfirmationPending = false;
+
 
 var cameraStream =
     document.getElementById(
@@ -418,52 +418,54 @@ function updateState(
                 printConfirmationPending =
                     false;
 
+                hideAllScreens();
+
                 previewScreen.classList.remove(
                     "hidden"
                 );
 
                 printButton.disabled =
-                    true;
+        true;
 
-                previewRestartButton.disabled =
-                    true;
+    previewRestartButton.disabled =
+        true;
+
+    printStatus.textContent =
+        "Druckauftrag wurde gestartet.";
+
+    if (
+        printFinishedTimer !== null
+    ) {
+        window.clearTimeout(
+            printFinishedTimer
+        );
+    }
+
+    printFinishedTimer =
+        window.setTimeout(
+            function () {
+                printFinishedTimer =
+                    null;
 
                 printStatus.textContent =
-                    "Druckauftrag wurde gestartet.";
+                    "";
 
-                if (
-                    printFinishedTimer !== null
-                ) {
-                    window.clearTimeout(
-                        printFinishedTimer
-                    );
-                }
+                previewRestartButton.disabled =
+                    false;
 
-                printFinishedTimer =
-                    window.setTimeout(
-                        function () {
-                            printFinishedTimer =
-                                null;
+                /*
+                 * Process the already received
+                 * start state now.
+                 */
+                updateState(
+                    message
+                );
+            },
+            2500
+        );
 
-                            printStatus.textContent =
-                                "";
-
-                            previewRestartButton.disabled =
-                                false;
-
-                             /*
-                             * Process the already received
-                             * start state now.
-                             */
-                            updateState(
-                                message
-                            );
-                        },
-                        2500
-                    );
-
-                return;
-            }
+    return;
+}
             startScreen.classList.remove(
                 "hidden"
             );
@@ -666,19 +668,6 @@ function updateState(
             break;
 
         case "error":
-            printConfirmationPending =
-                false;
-
-            if (
-                printFinishedTimer !== null
-            ) {
-                window.clearTimeout(
-                    printFinishedTimer
-                );
-
-                printFinishedTimer =
-                    null;
-            }
             errorScreen.classList.remove(
                 "hidden"
             );

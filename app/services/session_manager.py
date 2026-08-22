@@ -118,6 +118,16 @@ class SessionManager:
             self.session = Session()
 
             return self.session.state
+        if command == SessionCommand.PRINT_FINISHED:
+            if self.state != FotoboxState.PRINTING:
+                raise InvalidTransitionError(
+                    "Print can only be finished "
+                    "while printing."
+                )
+
+            self.session = Session()
+
+            return self.session.state
 
         transitions = self.TRANSITIONS.get(
             self.state,

@@ -109,7 +109,6 @@ def admin_logs(
 @router.delete(
     "/logos/{filename}"
 )
-
 @router.post(
     "/printer/test"
 )
@@ -143,6 +142,10 @@ def printer_test() -> dict[str, str]:
         ),
     }
 
+
+@router.delete(
+    "/logos/{filename}"
+)
 def delete_logo(
     filename: str,
 ) -> dict[str, str]:
@@ -164,9 +167,11 @@ def delete_logo(
         "filename": filename,
     }
 
+
 @router.get(
     "/printer/status"
 )
+
 def printer_status() -> dict:
     """Return the current printer status."""
 
