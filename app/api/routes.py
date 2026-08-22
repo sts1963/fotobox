@@ -9,6 +9,7 @@ from fastapi.responses import (
 from app.services.container import (
     camera_service,
     session_manager,
+    greenscreen_calibration_service,
 )
 from app.services.stream import mjpeg_stream
 
@@ -186,6 +187,112 @@ def session_collage(
     return FileResponse(
         collage_path,
         media_type="image/jpeg",
+        headers={
+            "Cache-Control": "no-store",
+        },
+    )
+
+@router.get(
+    "/greenscreen/calibration/reference"
+)
+def greenscreen_reference() -> FileResponse:
+    """Return the latest greenscreen calibration image."""
+
+    path = (
+        greenscreen_calibration_service
+        .calibration_directory
+        / "greenscreen_reference.jpg"
+    )
+
+    if not path.is_file():
+        raise HTTPException(
+            status_code=404,
+            detail="Calibration image not found.",
+        )
+
+    return FileResponse(
+        path,
+        media_type="image/jpeg",
+        headers={
+            "Cache-Control": "no-store",
+        },
+    )
+
+
+@router.get(
+    "/greenscreen/calibration/mask"
+)
+def greenscreen_mask() -> FileResponse:
+    """Return the latest greenscreen calibration mask."""
+
+    path = (
+        greenscreen_calibration_service
+        .calibration_directory
+        / "greenscreen_mask.png"
+    )
+
+    if not path.is_file():
+        raise HTTPException(
+            status_code=404,
+            detail="Calibration mask not found.",
+        )
+
+    return FileResponse(
+        path,
+        media_type="image/png",
+        headers={
+            "Cache-Control": "no-store",
+        },
+    )
+
+@router.get(
+    "/greenscreen/calibration/test"
+)
+def greenscreen_test_image() -> FileResponse:
+    """Return the latest greenscreen test image."""
+
+    path = (
+        greenscreen_calibration_service
+        .calibration_directory
+        / "greenscreen_test.jpg"
+    )
+
+    if not path.is_file():
+        raise HTTPException(
+            status_code=404,
+            detail="Greenscreen test image not found.",
+        )
+
+    return FileResponse(
+        path,
+        media_type="image/jpeg",
+        headers={
+            "Cache-Control": "no-store",
+        },
+    )
+
+
+@router.get(
+    "/greenscreen/calibration/test-mask"
+)
+def greenscreen_test_mask() -> FileResponse:
+    """Return the latest greenscreen test mask."""
+
+    path = (
+        greenscreen_calibration_service
+        .calibration_directory
+        / "greenscreen_test_mask.png"
+    )
+
+    if not path.is_file():
+        raise HTTPException(
+            status_code=404,
+            detail="Greenscreen test mask not found.",
+        )
+
+    return FileResponse(
+        path,
+        media_type="image/png",
         headers={
             "Cache-Control": "no-store",
         },

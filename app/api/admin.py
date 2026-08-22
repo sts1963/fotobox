@@ -19,6 +19,9 @@ from app.services.container import (
     logo_library_service,
     photo_session_service,
     settings_admin_service,
+    greenscreen_calibration_service,
+    print_service,
+    test_print_service,
 )
 
 
@@ -72,6 +75,15 @@ class FotoboxSettingsUpdate(
     session: SessionSettingsUpdate
     background: BackgroundSettingsUpdate
 
+class GreenscreenMaskRequest(
+    BaseModel
+):
+    hue_min: int
+    hue_max: int
+    saturation_min: int
+    value_min: int
+    use_test_image: bool = False
+
 @router.get("/status")
 def admin_status() -> dict:
     """Return the complete Fotobox diagnostic status."""
@@ -97,6 +109,40 @@ def admin_logs(
 @router.delete(
     "/logos/{filename}"
 )
+
+@router.post(
+    "/printer/test"
+)
+def printer_test() -> dict[str, str]:
+    """Generate and print a diagnostic page."""
+
+    try:
+        test_image = (
+            test_print_service
+            .create()
+        )
+
+        job = (
+            print_service
+            .print_collage(
+                test_image
+            )
+        )
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    return {
+        "status": "submitted",
+        "job": job,
+        "path": str(
+            test_image
+        ),
+    }
+
 def delete_logo(
     filename: str,
 ) -> dict[str, str]:
@@ -117,6 +163,14 @@ def delete_logo(
         "status": "deleted",
         "filename": filename,
     }
+
+@router.get(
+    "/printer/status"
+)
+def printer_status() -> dict:
+    """Return the current printer status."""
+
+    return print_service.get_status()
 
 def _poweroff_system() -> None:
     """Power off the Raspberry Pi."""
@@ -473,3 +527,79 @@ def update_admin_settings(
             status_code=400,
             detail=str(exc),
         ) from exc
+
+@router.post(
+    "/greenscreen/calibrate"
+)
+def calibrate_greenscreen() -> dict:
+    """Capture an empty greenscreen and suggest HSV settings."""
+
+    try:
+        return (
+            greenscreen_calibration_service
+            .calibrate()
+        )
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+@router.post(
+    "/greenscreen/mask"
+)
+def create_greenscreen_mask(
+    update: GreenscreenMaskRequest,
+) -> dict[str, str]:
+    """Create a preview mask using supplied HSV values."""
+
+    try:
+        path = (
+            greenscreen_calibration_service
+            .create_mask(
+                hue_min=update.hue_min,
+                hue_max=update.hue_max,
+                saturation_min=(
+                    update.saturation_min
+                ),
+                value_min=(
+                    update.value_min
+                ),
+                use_test_image=(
+                    update.use_test_image
+                ),
+            )
+        )
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    return {
+        "path": str(path),
+    }
+
+@router.post(
+    "/greenscreen/test-photo"
+)
+def capture_greenscreen_test_photo() -> dict[str, str]:
+    """Capture a person in front of the greenscreen."""
+
+    try:
+        path = (
+            greenscreen_calibration_service
+            .capture_test_photo()
+        )
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    return {
+        "path": str(path),
+    }
+

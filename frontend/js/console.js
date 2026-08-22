@@ -1,117 +1,234 @@
-const overallStatus =
+var overallStatus =
     document.getElementById("overall-status");
 
-const cameraState =
+var cameraState =
     document.getElementById("camera-state");
 
-const cameraAvailable =
+var cameraAvailable =
     document.getElementById("camera-available");
 
-const cameraLastFrame =
+var cameraLastFrame =
     document.getElementById("camera-last-frame");
 
-const cameraError =
+var cameraError =
     document.getElementById("camera-error");
 
-const sessionState =
+var sessionState =
     document.getElementById("session-state");
 
-const sessionRunning =
+var sessionRunning =
     document.getElementById("session-running");
 
-const sessionPhotos =
+var sessionPhotos =
     document.getElementById("session-photos");
 
-const sessionId =
+var sessionId =
     document.getElementById("session-id");
 
-const sessionCollage =
+var sessionCollage =
     document.getElementById("session-collage");
 
-const cpuTemperature =
+var cpuTemperature =
     document.getElementById("cpu-temperature");
 
-const systemUptime =
+var systemUptime =
     document.getElementById("system-uptime");
 
-const applicationUptime =
+var applicationUptime =
     document.getElementById("application-uptime");
 
-const diskFree =
+var diskFree =
     document.getElementById("disk-free");
 
-const diskTotal =
+var diskTotal =
     document.getElementById("disk-total");
 
-const diskUsed =
+var diskUsed =
     document.getElementById("disk-used");
 
-const diskPercent =
+var diskPercent =
     document.getElementById("disk-percent");
 
-const logOutput =
+var logOutput =
     document.getElementById("log-output");
 
-const logCount =
+var logCount =
     document.getElementById("log-count");
-const shutdownButton =
+
+var printerStatus =
+    document.getElementById("printer-status");
+
+var printerAvailable =
+    document.getElementById("printer-available");
+
+var printerReady =
+    document.getElementById("printer-ready");
+
+var printerMessage =
+    document.getElementById("printer-message");
+
+var printerTestButton =
+    document.getElementById("printer-test-button");
+
+var printerTestStatus =
+    document.getElementById("printer-test-status");
+
+var shutdownButton =
     document.getElementById("shutdown-button");
 
-const shutdownDialog =
+var shutdownDialog =
     document.getElementById("shutdown-dialog");
 
-const shutdownCancel =
+var shutdownCancel =
     document.getElementById("shutdown-cancel");
 
-const shutdownConfirm =
+var shutdownConfirm =
     document.getElementById("shutdown-confirm");
 
+
+function requestJson(
+    method,
+    url,
+    success,
+    failure
+) {
+    var request =
+        new XMLHttpRequest();
+
+    request.open(
+        method,
+        url,
+        true
+    );
+
+    request.setRequestHeader(
+        "Cache-Control",
+        "no-cache"
+    );
+
+    request.onreadystatechange =
+        function () {
+            if (request.readyState !== 4) {
+                return;
+            }
+
+            var data = null;
+
+            if (request.responseText) {
+                try {
+                    data = JSON.parse(
+                        request.responseText
+                    );
+                } catch (error) {
+                    if (failure) {
+                        failure(
+                            "Ungültige Serverantwort."
+                        );
+                    }
+
+                    return;
+                }
+            }
+
+            if (
+                request.status >= 200
+                && request.status < 300
+            ) {
+                if (success) {
+                    success(data);
+                }
+
+                return;
+            }
+
+            if (failure) {
+                var message =
+                    "HTTP " + request.status;
+
+                if (
+                    data
+                    && data.detail
+                ) {
+                    message =
+                        data.detail;
+                }
+
+                failure(message);
+            }
+        };
+
+    request.onerror =
+        function () {
+            if (failure) {
+                failure(
+                    "Netzwerkfehler."
+                );
+            }
+        };
+
+    request.send();
+}
+
+
 function yesNo(value) {
-    return value ? "Ja" : "Nein";
+    return value
+        ? "Ja"
+        : "Nein";
 }
 
 
 function formatUptime(seconds) {
     if (
-        seconds === null ||
-        seconds === undefined
+        seconds === null
+        || seconds === undefined
     ) {
         return "–";
     }
 
-    let remaining =
+    var remaining =
         Math.floor(seconds);
 
-    const days =
+    var days =
         Math.floor(
             remaining / 86400
         );
 
-    remaining %= 86400;
+    remaining =
+        remaining % 86400;
 
-    const hours =
+    var hours =
         Math.floor(
             remaining / 3600
         );
 
-    remaining %= 3600;
+    remaining =
+        remaining % 3600;
 
-    const minutes =
+    var minutes =
         Math.floor(
             remaining / 60
         );
 
-    const parts = [];
+    var parts = [];
 
     if (days > 0) {
-        parts.push(`${days} T`);
+        parts.push(
+            days + " T"
+        );
     }
 
-    if (hours > 0 || days > 0) {
-        parts.push(`${hours} Std`);
+    if (
+        hours > 0
+        || days > 0
+    ) {
+        parts.push(
+            hours + " Std"
+        );
     }
 
-    parts.push(`${minutes} Min`);
+    parts.push(
+        minutes + " Min"
+    );
 
     return parts.join(" ");
 }
@@ -122,37 +239,27 @@ function formatTimestamp(value) {
         return "–";
     }
 
-    const date = new Date(value);
+    var date =
+        new Date(value);
 
-    if (
-        Number.isNaN(
-            date.getTime()
-        )
-    ) {
+    if (isNaN(date.getTime())) {
         return value;
     }
 
-    return date.toLocaleTimeString(
-        "de-DE"
-    );
+    return date.toLocaleTimeString();
 }
 
 
 function setOverallStatus(data) {
-    overallStatus.classList.remove(
-        "ok",
-        "error",
-        "busy",
-        "unknown"
-    );
+    overallStatus.className =
+        "status-badge";
 
     if (!data.camera.available) {
         overallStatus.textContent =
             "Kamera nicht verfügbar";
 
-        overallStatus.classList.add(
-            "error"
-        );
+        overallStatus.className +=
+            " error";
 
         return;
     }
@@ -161,9 +268,8 @@ function setOverallStatus(data) {
         overallStatus.textContent =
             "Fotosession läuft";
 
-        overallStatus.classList.add(
-            "busy"
-        );
+        overallStatus.className +=
+            " busy";
 
         return;
     }
@@ -172,9 +278,8 @@ function setOverallStatus(data) {
         overallStatus.textContent =
             "Fehler";
 
-        overallStatus.classList.add(
-            "error"
-        );
+        overallStatus.className +=
+            " error";
 
         return;
     }
@@ -182,9 +287,8 @@ function setOverallStatus(data) {
     overallStatus.textContent =
         "Bereit";
 
-    overallStatus.classList.add(
-        "ok"
-    );
+    overallStatus.className +=
+        " ok";
 }
 
 
@@ -195,9 +299,7 @@ function updateStatus(data) {
         data.camera.state;
 
     cameraAvailable.textContent =
-        yesNo(
-            data.camera.available
-        );
+        yesNo(data.camera.available);
 
     cameraLastFrame.textContent =
         formatTimestamp(
@@ -205,16 +307,16 @@ function updateStatus(data) {
         );
 
     cameraError.textContent =
-        data.camera.last_error ?? "–";
+        data.camera.last_error
+        ? data.camera.last_error
+        : "–";
 
 
     sessionState.textContent =
         data.session.state;
 
     sessionRunning.textContent =
-        yesNo(
-            data.session.running
-        );
+        yesNo(data.session.running);
 
     sessionPhotos.textContent =
         data.session.photo_count;
@@ -224,17 +326,17 @@ function updateStatus(data) {
 
     sessionCollage.textContent =
         data.session.collage
-            ? "vorhanden"
-            : "–";
+        ? "vorhanden"
+        : "–";
 
 
-    const system =
+    var system =
         data.system;
 
     cpuTemperature.textContent =
         system.cpu_temperature_c !== null
-            ? `${system.cpu_temperature_c} °C`
-            : "–";
+        ? system.cpu_temperature_c + " °C"
+        : "–";
 
     systemUptime.textContent =
         formatUptime(
@@ -247,203 +349,192 @@ function updateStatus(data) {
         );
 
 
-    const disk =
+    var disk =
         system.disk;
 
     diskFree.textContent =
         disk.free_gb !== null
-            ? `${disk.free_gb} GB`
-            : "–";
+        ? disk.free_gb + " GB"
+        : "–";
 
     diskTotal.textContent =
         disk.total_gb !== null
-            ? `${disk.total_gb} GB`
-            : "–";
+        ? disk.total_gb + " GB"
+        : "–";
 
     diskUsed.textContent =
         disk.used_gb !== null
-            ? `${disk.used_gb} GB`
-            : "–";
+        ? disk.used_gb + " GB"
+        : "–";
 
     diskPercent.textContent =
         disk.used_percent !== null
-            ? `${disk.used_percent} %`
-            : "–";
+        ? disk.used_percent + " %"
+        : "–";
 }
 
 
-async function loadStatus() {
-    try {
-        const response = await fetch(
-            "/api/admin/status",
-            {
-                cache: "no-store",
-            }
+function updatePrinterStatus(data) {
+    printerAvailable.textContent =
+        yesNo(data.available);
+
+    printerReady.textContent =
+        yesNo(data.ready);
+
+    printerMessage.textContent =
+        data.message
+        ? data.message
+        : "–";
+
+    printerTestButton.disabled =
+        !(
+            data.enabled
+            && data.available
+            && data.ready
         );
 
-        if (!response.ok) {
-            throw new Error(
-                `HTTP ${response.status}`
-            );
-        }
-
-        const data =
-            await response.json();
-
-        updateStatus(data);
-
-    } catch (error) {
-        overallStatus.textContent =
-            "Backend nicht erreichbar";
-
-        overallStatus.classList.remove(
-            "ok",
-            "busy",
-            "unknown"
-        );
-
-        overallStatus.classList.add(
-            "error"
-        );
-
-        console.error(
-            "Status request failed:",
-            error
-        );
+    if (!data.enabled) {
+        printerStatus.textContent =
+            "Deaktiviert";
+        return;
     }
+
+    if (!data.available) {
+        printerStatus.textContent =
+            "Nicht verbunden";
+        return;
+    }
+
+    if (!data.ready) {
+        printerStatus.textContent =
+            "Nicht bereit";
+        return;
+    }
+
+    printerStatus.textContent =
+        "Bereit";
 }
 
 
-async function loadLogs() {
-    try {
-        const response = await fetch(
-            "/api/admin/logs?limit=40",
-            {
-                cache: "no-store",
-            }
-        );
+function loadStatus() {
+    requestJson(
+        "GET",
+        "/api/admin/status?v="
+            + Date.now(),
 
-        if (!response.ok) {
-            throw new Error(
-                `HTTP ${response.status}`
-            );
-        }
+        function (data) {
+            updateStatus(data);
+        },
 
-        const data =
-            await response.json();
-
-        logOutput.textContent =
-            data.lines.join("\n");
-
-        logCount.textContent =
-            `${data.count} Einträge`;
-
-        /*
-         * Keep the newest log entries visible.
-         */
-        logOutput.scrollTop =
-            logOutput.scrollHeight;
-
-    } catch (error) {
-        logOutput.textContent =
-            "Log konnte nicht geladen werden.";
-
-        console.error(
-            "Log request failed:",
-            error
-        );
-    }
-}
-
-shutdownButton.addEventListener(
-    "click",
-    () => {
-        shutdownDialog.showModal();
-    }
-);
-
-
-shutdownCancel.addEventListener(
-    "click",
-    () => {
-        shutdownDialog.close();
-    }
-);
-
-
-shutdownConfirm.addEventListener(
-    "click",
-    async () => {
-        shutdownConfirm.disabled = true;
-
-        shutdownConfirm.textContent =
-            "Wird ausgeschaltet …";
-
-        try {
-            const response = await fetch(
-                "/api/admin/shutdown",
-                {
-                    method: "POST",
-                    cache: "no-store",
-                }
-            );
-
-            if (!response.ok) {
-                throw new Error(
-                    `HTTP ${response.status}`
-                );
-            }
-
+        function () {
             overallStatus.textContent =
-                "System wird ausgeschaltet …";
+                "Backend nicht erreichbar";
 
-            overallStatus.classList.remove(
-                "ok",
-                "busy",
-                "unknown"
-            );
-
-            overallStatus.classList.add(
-                "error"
-            );
-
-        } catch (error) {
-            console.error(
-                "Shutdown failed:",
-                error
-            );
-
-            shutdownConfirm.disabled = false;
-
-            shutdownConfirm.textContent =
-                "Ausschalten";
-
-            shutdownDialog.close();
-
-            overallStatus.textContent =
-                "Shutdown fehlgeschlagen";
-
-            overallStatus.classList.add(
-                "error"
-            );
+            overallStatus.className =
+                "status-badge error";
         }
-    }
-);
+    );
+}
+
+
+function loadPrinterStatus() {
+    requestJson(
+        "GET",
+        "/api/admin/printer/status?v="
+            + Date.now(),
+
+        function (data) {
+            updatePrinterStatus(data);
+        },
+
+        function () {
+            printerStatus.textContent =
+                "Status nicht verfügbar";
+
+            printerAvailable.textContent =
+                "–";
+
+            printerReady.textContent =
+                "–";
+
+            printerTestButton.disabled =
+                true;
+        }
+    );
+}
+
+
+function loadLogs() {
+    requestJson(
+        "GET",
+        "/api/admin/logs?limit=40&v="
+            + Date.now(),
+
+        function (data) {
+            logOutput.textContent =
+                data.lines.join("\n");
+
+            logCount.textContent =
+                data.count
+                + " Einträge";
+
+            logOutput.scrollTop =
+                logOutput.scrollHeight;
+        },
+
+        function () {
+            logOutput.textContent =
+                "Log konnte nicht geladen werden.";
+        }
+    );
+}
+
+
+function runPrinterTest() {
+    printerTestButton.disabled =
+        true;
+
+    printerTestStatus.textContent =
+        "Testdruck wird gestartet …";
+
+    requestJson(
+        "POST",
+        "/api/admin/printer/test",
+
+        function () {
+            printerTestStatus.textContent =
+                "Testdruck wurde an den "
+                + "Drucker gesendet.";
+
+            loadPrinterStatus();
+        },
+
+        function (error) {
+            printerTestStatus.textContent =
+                "Fehler: " + error;
+
+            loadPrinterStatus();
+        }
+    );
+}
+
+
+printerTestButton.onclick =
+    function () {
+        runPrinterTest();
+    };
+
 
 function refreshConsole() {
     loadStatus();
+    loadPrinterStatus();
     loadLogs();
 }
 
 
-/*
- * Status changes quickly enough that two seconds
- * are useful. Logs need no separate faster polling.
- */
 refreshConsole();
 
 window.setInterval(
     refreshConsole,
     2000
 );
-

@@ -13,7 +13,7 @@
 
     <link
         rel="stylesheet"
-        href="/static/css/console.css?v=4"
+        href="/static/css/console.css?v=21"
     >
 </head>
 
@@ -150,7 +150,44 @@
                 <dd id="session-collage">–</dd>
             </dl>
         </article>
+<article class="card">
+    <h2>Drucker</h2>
 
+    <dl>
+        <dt>Status</dt>
+        <dd id="printer-status">–</dd>
+
+        <dt>Verfügbar</dt>
+        <dd id="printer-available">–</dd>
+
+        <dt>Bereit</dt>
+        <dd id="printer-ready">–</dd>
+
+        <dt>Details</dt>
+        <dd
+            id="printer-message"
+            class="small-value"
+        >
+            –
+        </dd>
+
+ <div class="printer-actions">
+    <button
+        id="printer-test-button"
+        type="button"
+        disabled
+    >
+        Testdruck
+    </button>
+</div>
+
+<div
+    id="printer-test-status"
+    class="small-value"
+></div>
+
+    </dl>
+</article>
     </section>
 
 
@@ -203,7 +240,7 @@
 
 </main>
 
-<script src="/static/js/console.js?v=4"></script>
+<script src="/static/js/console.js?v=21"></script>
 
 </body>
 </html>

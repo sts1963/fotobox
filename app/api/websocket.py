@@ -54,6 +54,8 @@ async def websocket_endpoint(
                             "message": str(exc),
                         }
                     )
+            elif command == "print":
+                await photo_session_service.print_collage()
 
             elif command == "restart":
                 await photo_session_service.restart()

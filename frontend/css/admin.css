@@ -210,3 +210,74 @@ body {
         text-align: center;
     }
 }
+
+
+.calibration-section {
+    margin-top: 30px;
+    padding-top: 20px;
+
+    border-top: 1px solid #ddd;
+}
+
+.calibration-actions {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+    margin: 15px 0;
+}
+
+.calibration-actions button {
+    padding: 10px 16px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: #e7e9ee;
+    color: #202124;
+
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.calibration-actions button:disabled {
+    opacity: 0.4;
+}
+
+.calibration-preview {
+    display: flex;
+
+    gap: 16px;
+
+    margin-top: 20px;
+}
+
+.calibration-preview > div {
+    width: 50%;
+}
+
+.calibration-preview img {
+    display: block;
+
+    width: 100%;
+    height: auto;
+
+    background: #222;
+}
+
+.hidden {
+    display: none !important;
+}
+
+@media (max-width: 700px) {
+    .calibration-preview {
+        display: block;
+    }
+
+    .calibration-preview > div {
+        width: 100%;
+        margin-bottom: 16px;
+    }
+}

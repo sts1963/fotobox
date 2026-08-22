@@ -534,6 +534,15 @@ function updateState(
 
             startButton.disabled =
                 true;
+            processingScreen.querySelector(
+                "h2"
+            ).textContent =
+                "Fotos aufgenommen";
+
+            processingScreen.querySelector(
+                "p"
+            ).textContent =
+                "Die Collage wird erstellt …";
 
             break;
 
@@ -545,6 +554,9 @@ function updateState(
 
             startButton.disabled =
                 true;
+
+            printButton.disabled =
+                false;
 
             var collageSessionId =
                 encodeURIComponent(
@@ -561,11 +573,27 @@ function updateState(
 
 
         case "printing":
+            processingScreen.classList.remove(
+                "hidden"
+            );
+
             startButton.disabled =
                 true;
 
-            break;
+            printButton.disabled =
+                true;
 
+            processingScreen.querySelector(
+                "h2"
+            ).textContent =
+                "Foto wird gedruckt";
+
+            processingScreen.querySelector(
+                "p"
+            ).textContent =
+                "Bitte einen Moment warten …";
+
+            break;
 
         case "error":
             errorScreen.classList.remove(
@@ -724,12 +752,17 @@ previewRestartButton.addEventListener(
     }
 );
 
+printButton.addEventListener(
+    "click",
+    function () {
+        printButton.disabled =
+            true;
 
-/*
- * Printing is intentionally not implemented yet.
- */
-printButton.disabled =
-    true;
+        sendCommand(
+            "print"
+        );
+    }
+);
 
 function startAdminHold(
     event

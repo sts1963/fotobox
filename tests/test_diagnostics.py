@@ -8,6 +8,15 @@ from app.services.collage import CollageGenerator
 from app.core.events import EventBus
 from app.services.background import BackgroundProcessor
 
+class FakePrintService:
+    """Minimal print service for photo session tests."""
+
+    def print_collage(
+        self,
+        collage_path: Path,
+    ) -> str:
+        return "test-job"
+
 def test_diagnostic_snapshot(
     tmp_path: Path,
 ) -> None:
@@ -20,6 +29,7 @@ def test_diagnostic_snapshot(
          camera_service=camera,
          collage_generator=CollageGenerator(),
          background_processor=BackgroundProcessor(),
+         print_service=FakePrintService(),  # type: ignore[arg-type]
          event_bus=EventBus(),
          session_root=tmp_path,
          background_enabled=False,
@@ -67,6 +77,7 @@ def test_diagnostic_log_lines(
         camera_service=camera,
         collage_generator=CollageGenerator(),
         background_processor=BackgroundProcessor(),
+        print_service=FakePrintService(),  # type: ignore[arg-type]
         event_bus=EventBus(),
         session_root=tmp_path,
         background_enabled=False,

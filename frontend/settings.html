@@ -13,7 +13,7 @@
 
     <link
         rel="stylesheet"
-        href="/static/css/admin.css?v=4"
+        href="/static/css/admin.css?v=5"
     >
 </head>
 
@@ -175,6 +175,74 @@
                 max="50"
             >
         </div>
+
+<div class="calibration-section">
+
+    <h3>Greenscreen kalibrieren</h3>
+
+    <p>
+        Für die Kalibrierung darf keine Person
+        vor dem Greenscreen stehen.
+    </p>
+
+    <div class="calibration-actions">
+
+        <button
+            id="calibrate-greenscreen"
+            type="button"
+        >
+            Kalibrieren
+        </button>
+
+        <button
+            id="preview-mask"
+            type="button"
+            disabled
+        >
+            Maske anzeigen
+        </button>
+
+        <button
+            id="apply-calibration"
+            type="button"
+            disabled
+        >
+            Werte übernehmen
+        </button>
+
+    </div>
+
+    <div
+        id="calibration-message"
+        class="settings-message"
+    ></div>
+
+    <div
+        id="calibration-preview"
+        class="calibration-preview hidden"
+    >
+
+        <div>
+            <h4>Referenzbild</h4>
+
+            <img
+                id="calibration-reference"
+                alt="Greenscreen Referenzbild"
+            >
+        </div>
+
+        <div>
+            <h4>Erkannte Maske</h4>
+
+            <img
+                id="calibration-mask"
+                alt="Greenscreen Maske"
+            >
+        </div>
+
+    </div>
+
+</div>
 
     </section>
 

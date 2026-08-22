@@ -19,6 +19,10 @@ from app.services.background import (
     BackgroundProcessor,
 )
 
+from app.services.printing import (
+    PrintError,
+    PrintService,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +40,7 @@ class PhotoSessionService:
         camera_service: CameraService,
         collage_generator: CollageGenerator,
         background_processor: BackgroundProcessor,
+        print_service: PrintService,
         event_bus: EventBus,
         session_root: Path = Path("data/sessions"),
         logo_path: Path = Path("assets/logo.png"),
@@ -61,6 +66,7 @@ class PhotoSessionService:
 
         self._task: asyncio.Task[None] | None = None
         self._start_lock = asyncio.Lock()
+        self.print_service = print_service
 
     @property
     def backgrounds_enabled(self) -> bool:
@@ -523,6 +529,65 @@ class PhotoSessionService:
 
         await self._publish_state()
 
+    async def print_collage(self) -> None:
+       """Print the collage of the current session."""
+
+       session = self.session_manager.session
+
+       if session.collage is None:
+           raise PrintError(
+               "No collage is available for printing."
+           )
+
+       try:
+           self.session_manager.handle(
+               SessionCommand.PRINT
+           )
+
+           await self._publish_state()
+
+           logger.info(
+               "Printing collage: "
+               "session_id=%s path=%s",
+               session.id,
+               session.collage,
+           )
+
+           job_info = await asyncio.to_thread(
+               self.print_service.print_collage,
+               Path(session.collage),
+           )
+
+           logger.info(
+               "Collage submitted to printer: "
+               "session_id=%s job=%s",
+               session.id,
+               job_info,
+           )
+
+           self.session_manager.handle(
+               SessionCommand.PRINT_FINISHED
+           )
+
+           await self._publish_state()
+
+       except (
+           PrintError,
+           InvalidTransitionError,
+       ) as exc:
+           logger.error(
+               "Printing failed: "
+               "session_id=%s error=%s",
+               session.id,
+               exc,
+           )
+
+           self.session_manager.set_error(
+               str(exc)
+           )
+
+           await self._publish_state()
+   
     async def _publish_state(self) -> None:
         """Publish the current session state."""
 

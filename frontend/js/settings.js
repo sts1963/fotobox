@@ -8,6 +8,226 @@ var messageElement =
         "settings-message"
     );
 
+var calibrateButton =
+    document.getElementById(
+        "calibrate-greenscreen"
+    );
+
+var previewMaskButton =
+    document.getElementById(
+        "preview-mask"
+    );
+
+var applyCalibrationButton =
+    document.getElementById(
+        "apply-calibration"
+    );
+
+var calibrationMessage =
+    document.getElementById(
+        "calibration-message"
+    );
+
+var calibrationPreview =
+    document.getElementById(
+        "calibration-preview"
+    );
+
+var calibrationReference =
+    document.getElementById(
+        "calibration-reference"
+    );
+
+var calibrationMask =
+    document.getElementById(
+        "calibration-mask"
+    );
+
+var calibrationSuggestion =
+    null;
+
+function showCalibrationMessage(
+    text,
+    type
+) {
+    calibrationMessage.textContent =
+        text;
+
+    calibrationMessage.className =
+        "settings-message";
+
+    if (type) {
+        calibrationMessage.className +=
+            " " + type;
+    }
+}
+
+function calibrateGreenscreen() {
+    calibrateButton.disabled =
+        true;
+
+    previewMaskButton.disabled =
+        true;
+
+    applyCalibrationButton.disabled =
+        true;
+
+    showCalibrationMessage(
+        "Kalibrierung läuft …"
+    );
+
+    requestJson(
+        "POST",
+        "/api/admin/greenscreen/calibrate",
+        null,
+
+        function (data) {
+            calibrationSuggestion =
+                data;
+
+            calibrateButton.disabled =
+                false;
+
+            previewMaskButton.disabled =
+                false;
+
+            applyCalibrationButton.disabled =
+                false;
+
+            calibrationReference.src =
+                "/api/greenscreen/calibration/reference?v="
+                + Date.now();
+
+            showCalibrationMessage(
+                "Kalibrierung abgeschlossen.",
+                "success"
+            );
+        },
+
+        function (error) {
+            calibrateButton.disabled =
+                false;
+
+            showCalibrationMessage(
+                "Kalibrierung fehlgeschlagen: "
+                + error,
+                "error"
+            );
+        }
+    );
+}
+
+function previewCalibrationMask() {
+    if (!calibrationSuggestion) {
+        return;
+    }
+
+    previewMaskButton.disabled =
+        true;
+
+    requestJson(
+        "POST",
+        "/api/admin/greenscreen/mask",
+        {
+            hue_min:
+                calibrationSuggestion.hue_min,
+
+            hue_max:
+                calibrationSuggestion.hue_max,
+
+            saturation_min:
+                calibrationSuggestion.saturation_min,
+
+            value_min:
+                calibrationSuggestion.value_min
+        },
+
+        function () {
+            calibrationMask.src =
+                "/api/greenscreen/calibration/mask?v="
+                + Date.now();
+
+            calibrationPreview.className =
+                "calibration-preview";
+
+            previewMaskButton.disabled =
+                false;
+        },
+
+        function (error) {
+            previewMaskButton.disabled =
+                false;
+
+            showCalibrationMessage(
+                "Maske konnte nicht erzeugt werden: "
+                + error,
+                "error"
+            );
+        }
+    );
+}
+
+function applyCalibration() {
+    if (!calibrationSuggestion) {
+        return;
+    }
+
+    setValue(
+        "hue-min",
+        calibrationSuggestion.hue_min
+    );
+
+    setValue(
+        "hue-max",
+        calibrationSuggestion.hue_max
+    );
+
+    setValue(
+        "saturation-min",
+        calibrationSuggestion.saturation_min
+    );
+
+    setValue(
+        "value-min",
+        calibrationSuggestion.value_min
+    );
+
+    setValue(
+        "feather",
+        calibrationSuggestion.feather
+    );
+
+    showCalibrationMessage(
+        "Kalibrierungswerte wurden in "
+        + "die Eingabefelder übernommen. "
+        + "Zum dauerhaften Speichern noch "
+        + "\"Änderungen speichern\" drücken.",
+        "success"
+    );
+}
+
+calibrateButton.addEventListener(
+    "click",
+    function () {
+        calibrateGreenscreen();
+    }
+);
+
+previewMaskButton.addEventListener(
+    "click",
+    function () {
+        previewCalibrationMask();
+    }
+);
+
+applyCalibrationButton.addEventListener(
+    "click",
+    function () {
+        applyCalibration();
+    }
+);
+
+
 
 function getElement(id) {
     return document.getElementById(id);

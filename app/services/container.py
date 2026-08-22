@@ -7,6 +7,7 @@ from app.services.session_manager import SessionManager
 from app.services.diagnostics import DiagnosticService
 from pathlib import Path
 from app.services.background import BackgroundProcessor
+from app.services.printing import PrintService
 from app.services.background_library import (
     BackgroundLibraryService,
 )
@@ -16,6 +17,14 @@ from app.services.logo_library import (
 
 from app.services.settings_admin import (
     SettingsAdminService,
+)
+
+from app.services.greenscreen_calibration import (
+    GreenscreenCalibrationService,
+)
+
+from app.services.test_print import (
+    TestPrintService,
 )
 
 settings = load_settings()
@@ -30,6 +39,15 @@ camera_service = CameraService(
     retry_interval=settings.camera.retry_interval, 
 )
 
+greenscreen_calibration_service = (
+    GreenscreenCalibrationService(
+        camera_service=camera_service,
+        calibration_directory=(
+            settings.session.root.parent
+            / "calibration"
+        ),
+    )
+)
 
 session_manager = SessionManager()
 
@@ -74,11 +92,26 @@ logo_library_service = LogoLibraryService(
     ),
 )
 
+print_service = PrintService(
+    printer_name=settings.printer.name,
+    enabled=settings.printer.enabled,
+)
+
+test_print_service = TestPrintService(
+    output_path=Path(
+        "data/test-print.jpg"
+    ),
+    width=settings.collage.width,
+    height=settings.collage.height,
+    margin=settings.collage.margin,
+)
+
 photo_session_service = PhotoSessionService(
     session_manager=session_manager,
     camera_service=camera_service,
     collage_generator=collage_generator,
     background_processor=background_processor,
+    print_service=print_service,
     event_bus=event_bus,
     session_root=settings.session.root,
     logo_path=settings.collage.logo,

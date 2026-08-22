@@ -17,6 +17,15 @@ from app.services.session_manager import (
 )
 from app.services.background import BackgroundProcessor
 
+class FakePrintService:
+    """Minimal print service for photo session tests."""
+
+    def print_collage(
+        self,
+        collage_path: Path,
+    ) -> str:
+        return "test-job"
+
 class FakeCamera:
     """Minimal camera double for session tests."""
 
@@ -61,6 +70,7 @@ async def test_capture_and_collage_sequence(
         camera_service=camera,  # type: ignore[arg-type]
         collage_generator=collage_generator,
         background_processor=BackgroundProcessor(),
+        print_service=FakePrintService(),  # type: ignore[arg-type]
         event_bus=EventBus(),
         session_root=tmp_path,
         logo_path=(

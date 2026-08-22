@@ -13,7 +13,7 @@ session:
 collage:
   width: 1800
   height: 1200
-  margin: 24
+  margin: 60
   gap: 24
   jpeg_quality: 95
   logo: assets/logo.png
@@ -31,5 +31,5 @@ background:
     value_min: 5
     feather: 3
 printer:
-  enabled: false
+  enabled: true
   name: fotobox
