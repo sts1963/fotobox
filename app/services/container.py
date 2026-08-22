@@ -27,6 +27,11 @@ from app.services.test_print import (
     TestPrintService,
 )
 
+from app.services.session_archive import (
+    SessionArchiveService,
+)
+
+
 settings = load_settings()
 
 
@@ -104,6 +109,12 @@ test_print_service = TestPrintService(
     width=settings.collage.width,
     height=settings.collage.height,
     margin=settings.collage.margin,
+)
+
+session_archive_service = (
+    SessionArchiveService(
+        session_root=settings.session.root,
+    )
 )
 
 photo_session_service = PhotoSessionService(

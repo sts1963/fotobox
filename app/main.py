@@ -198,3 +198,17 @@ async def active_logo() -> FileResponse:
     return FileResponse(
         logo_path
     )
+
+@app.get(
+    "/sessions",
+    include_in_schema=False,
+)
+async def sessions_page() -> FileResponse:
+    """Serve the session archive administration."""
+
+    return FileResponse(
+        FRONTEND_DIR / "sessions.html",
+        headers={
+            "Cache-Control": "no-store",
+        },
+    )

@@ -22,8 +22,16 @@ from app.services.container import (
     greenscreen_calibration_service,
     print_service,
     test_print_service,
+    session_archive_service,
 )
 
+import io
+from datetime import datetime
+
+from fastapi.responses import (
+    FileResponse,
+    StreamingResponse,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +120,79 @@ def admin_logs(
 @router.post(
     "/printer/test"
 )
+
+@router.get(
+    "/sessions"
+)
+def admin_sessions() -> dict:
+    """Return stored photo sessions and summary."""
+
+    sessions = (
+        session_archive_service
+        .list_sessions()
+    )
+
+    return {
+        "summary": (
+            session_archive_service
+            .get_summary()
+        ),
+        "items": [
+            {
+                "session_id": session.session_id,
+                "created_at": (
+                    session.created_at.isoformat()
+                ),
+                "photo_count": session.photo_count,
+                "has_collage": session.has_collage,
+                "size_bytes": session.size_bytes,
+            }
+            for session in sessions
+        ],
+    }
+
+
+@router.get(
+    "/sessions/collages.zip"
+)
+def download_collages() -> StreamingResponse:
+    """Download all finished collages as one ZIP archive."""
+
+    try:
+        archive_data = (
+            session_archive_service
+            .create_collage_archive()
+        )
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=str(exc),
+        ) from exc
+
+    filename = (
+        "fotobox-collagen-"
+        + datetime.now().strftime(
+            "%Y-%m-%d"
+        )
+        + ".zip"
+    )
+
+    return StreamingResponse(
+        io.BytesIO(
+            archive_data
+        ),
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": (
+                'attachment; filename="'
+                + filename
+                + '"'
+            ),
+            "Cache-Control": "no-store",
+        },
+    )
+
 def printer_test() -> dict[str, str]:
     """Generate and print a diagnostic page."""
 
@@ -608,3 +689,100 @@ def capture_greenscreen_test_photo() -> dict[str, str]:
         "path": str(path),
     }
 
+@router.get(
+    "/sessions/{session_id}/collage"
+)
+def admin_session_collage(
+    session_id: str,
+) -> FileResponse:
+    """Return the collage of one archived session."""
+
+    try:
+        path = (
+            session_archive_service
+            .get_collage_path(
+                session_id
+            )
+        )
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=str(exc),
+        ) from exc
+
+    return FileResponse(
+        path,
+        media_type="image/jpeg",
+        headers={
+            "Cache-Control": "no-store",
+        },
+    )
+
+
+@router.delete(
+    "/sessions/{session_id}"
+)
+def delete_archived_session(
+    session_id: str,
+) -> dict[str, str]:
+    """Delete one stored photo session."""
+
+    try:
+        session_archive_service.delete_session(
+            session_id,
+            protected_session_id=(
+                photo_session_service
+                .session_manager
+                .session
+                .id
+            ),
+        )
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    return {
+        "status": "deleted",
+        "session_id": session_id,
+    }
+
+@router.delete(
+    "/sessions"
+)
+def delete_archived_sessions() -> dict:
+    """Delete all stored sessions except the active one."""
+
+    try:
+        active_session_id = (
+            photo_session_service
+            .session_manager
+            .session
+            .id
+        )
+
+        deleted_count = (
+            session_archive_service
+            .delete_all_except(
+                protected_session_id=(
+                    active_session_id
+                ),
+            )
+        )
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    return {
+        "status": "deleted",
+        "deleted_count": deleted_count,
+        "protected_session_id": (
+            active_session_id
+        ),
+    }
