@@ -137,6 +137,7 @@ echo
 echo "Fotobox Installation abgeschlossen."
 echo
 echo "Service-Status:"
+
 systemctl \
     --no-pager \
     --full \
