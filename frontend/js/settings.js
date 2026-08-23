@@ -1,3 +1,33 @@
+var shutdownButton =
+    document.getElementById(
+        "shutdown-button"
+    );
+
+var shutdownPanel =
+    document.getElementById(
+        "shutdown-panel"
+    );
+
+var shutdownPin =
+    document.getElementById(
+        "shutdown-pin"
+    );
+
+var shutdownCancel =
+    document.getElementById(
+        "shutdown-cancel"
+    );
+
+var shutdownConfirm =
+    document.getElementById(
+        "shutdown-confirm"
+    );
+
+var shutdownMessage =
+    document.getElementById(
+        "shutdown-message"
+    );
+
 var saveButton =
     document.getElementById(
         "save-settings"
@@ -426,6 +456,137 @@ function applySettings(
     );
 }
 
+function showShutdownMessage(
+    text,
+    type
+) {
+    shutdownMessage.textContent =
+        text;
+
+    shutdownMessage.className =
+        "settings-message";
+
+    if (type) {
+        shutdownMessage.className +=
+            " " + type;
+    }
+}
+
+
+function openShutdownPanel() {
+    shutdownPin.value = "";
+
+    showShutdownMessage(
+        ""
+    );
+
+    shutdownPanel.className =
+        "shutdown-panel";
+
+    shutdownPin.focus();
+}
+
+
+function closeShutdownPanel() {
+    shutdownPin.value = "";
+
+    shutdownPanel.className =
+        "shutdown-panel hidden";
+
+    showShutdownMessage(
+        ""
+    );
+}
+
+
+function shutdownSystem() {
+    var pin =
+        shutdownPin.value;
+
+    if (!pin) {
+        showShutdownMessage(
+            "Bitte Admin-PIN eingeben.",
+            "error"
+        );
+
+        return;
+    }
+
+    shutdownConfirm.disabled =
+        true;
+
+    shutdownCancel.disabled =
+        true;
+
+    showShutdownMessage(
+        "Fotobox wird ausgeschaltet …"
+    );
+
+    requestJson(
+        "POST",
+        "/api/admin/shutdown",
+        {
+            pin: pin
+        },
+
+        function () {
+            shutdownPin.value = "";
+
+            showShutdownMessage(
+                "System wird heruntergefahren.",
+                "success"
+            );
+
+            shutdownButton.disabled =
+                true;
+
+            shutdownConfirm.disabled =
+                true;
+        },
+
+        function (error) {
+            shutdownConfirm.disabled =
+                false;
+
+            shutdownCancel.disabled =
+                false;
+
+            shutdownPin.value = "";
+
+            showShutdownMessage(
+                "Ausschalten nicht möglich: "
+                + error,
+                "error"
+            );
+
+            shutdownPin.focus();
+        }
+    );
+}
+
+
+shutdownButton.addEventListener(
+    "click",
+    function () {
+        openShutdownPanel();
+    }
+);
+
+
+shutdownCancel.addEventListener(
+    "click",
+    function () {
+        closeShutdownPanel();
+    }
+);
+
+
+shutdownConfirm.addEventListener(
+    "click",
+    function () {
+        shutdownSystem();
+    }
+);
 
 function loadSettings() {
     showMessage(

@@ -281,3 +281,81 @@ body {
         margin-bottom: 16px;
     }
 }
+.system-card {
+    margin-top: 32px;
+}
+
+.system-card > p {
+    color: #666;
+}
+
+.system-actions {
+    margin-top: 18px;
+}
+
+.system-actions button,
+.shutdown-confirm-actions button {
+    padding: 12px 20px;
+
+    border: none;
+    border-radius: 8px;
+
+    font-size: 16px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+#shutdown-button {
+    background: #b3261e;
+    color: white;
+}
+
+.shutdown-panel {
+    margin-top: 20px;
+    padding-top: 20px;
+
+    border-top: 1px solid #ddd;
+}
+
+.shutdown-panel label {
+    display: block;
+
+    margin: 12px 0 6px;
+
+    font-weight: 600;
+}
+
+#shutdown-pin {
+    width: 160px;
+
+    padding: 10px;
+
+    border: 1px solid #bbb;
+    border-radius: 6px;
+
+    font-size: 20px;
+}
+
+.shutdown-confirm-actions {
+    display: flex;
+
+    gap: 10px;
+
+    margin-top: 16px;
+}
+
+#shutdown-cancel {
+    background: #e7e9ee;
+    color: #202124;
+}
+
+#shutdown-confirm {
+    background: #b3261e;
+    color: white;
+}
+
+.shutdown-confirm-actions button:disabled,
+.system-actions button:disabled {
+    opacity: 0.5;
+}

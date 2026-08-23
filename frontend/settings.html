@@ -13,7 +13,7 @@
 
     <link
         rel="stylesheet"
-        href="/static/css/admin.css?v=5"
+        href="/static/css/admin.css?v=6"
     >
 </head>
 
@@ -246,6 +246,76 @@
 
     </section>
 
+<section class="settings-card system-card">
+
+    <h2>System</h2>
+
+    <p>
+        Die Fotobox kann hier sicher
+        heruntergefahren werden.
+    </p>
+
+    <div class="system-actions">
+
+        <button
+            id="shutdown-button"
+            type="button"
+        >
+            Fotobox ausschalten
+        </button>
+
+    </div>
+
+
+    <div
+        id="shutdown-panel"
+        class="shutdown-panel hidden"
+    >
+
+        <p>
+            Zum Ausschalten bitte die
+            Admin-PIN eingeben.
+        </p>
+
+        <label for="shutdown-pin">
+            Admin-PIN
+        </label>
+
+        <input
+            id="shutdown-pin"
+            type="password"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="12"
+            autocomplete="off"
+        >
+
+        <div class="shutdown-confirm-actions">
+
+            <button
+                id="shutdown-cancel"
+                type="button"
+            >
+                Abbrechen
+            </button>
+
+            <button
+                id="shutdown-confirm"
+                type="button"
+            >
+                Ausschalten
+            </button>
+
+        </div>
+
+        <div
+            id="shutdown-message"
+            class="settings-message"
+        ></div>
+
+    </div>
+
+</section>
 
     <div
         id="settings-message"
@@ -267,7 +337,7 @@
 
 </main>
 
-<script src="/static/js/settings.js?v=1"></script>
+<script src="/static/js/settings.js?v=2"></script>
 
 </body>
 </html>
