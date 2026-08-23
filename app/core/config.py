@@ -68,6 +68,9 @@ class PrinterSettings:
     enabled: bool
     name: str
 
+@dataclass(frozen=True)
+class AdminSettings:
+    shutdown_pin: str
 
 @dataclass(frozen=True)
 class Settings:
@@ -76,6 +79,7 @@ class Settings:
     collage: CollageSettings
     background: BackgroundSettings
     printer: PrinterSettings
+    admin: AdminSettings
 
 
 def _project_path(value: str) -> Path:
@@ -161,6 +165,11 @@ def load_settings(
         printer = _section(
             raw,
             "printer",
+        )
+
+        admin = _section(
+            raw,
+            "admin",
         )
 
         settings = Settings(
@@ -260,6 +269,11 @@ def load_settings(
                 ),
                 name=str(
                     printer["name"]
+                ),
+            ),
+            admin=AdminSettings(
+                shutdown_pin=str(
+                    admin["shutdown_pin"]
                 ),
             ),
         )
@@ -402,4 +416,18 @@ def _validate_settings(
     if not settings.printer.name.strip():
         raise ConfigurationError(
             "printer.name must not be empty."
+        )
+    if not settings.admin.shutdown_pin.strip():
+        raise ConfigurationError(
+            "admin.shutdown_pin must not be empty."
+        )
+
+    if not settings.admin.shutdown_pin.isdigit():
+        raise ConfigurationError(
+            "admin.shutdown_pin must contain digits only."
+        )
+
+    if len(settings.admin.shutdown_pin) < 4:
+        raise ConfigurationError(
+            "admin.shutdown_pin must contain at least 4 digits."
         )

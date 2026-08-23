@@ -8,7 +8,6 @@ from fastapi import (
     BackgroundTasks,
     File,
     HTTPException,
-    Request,
     UploadFile,
 )
 from pydantic import BaseModel
@@ -23,6 +22,7 @@ from app.services.container import (
     print_service,
     test_print_service,
     session_archive_service,
+    settings,
 )
 
 import io
@@ -82,6 +82,9 @@ class FotoboxSettingsUpdate(
 ):
     session: SessionSettingsUpdate
     background: BackgroundSettingsUpdate
+
+class ShutdownRequest(BaseModel):
+    pin: str
 
 class GreenscreenMaskRequest(
     BaseModel
@@ -289,33 +292,26 @@ def _poweroff_system() -> None:
     status_code=202,
 )
 async def admin_shutdown(
-    request: Request,
+    shutdown_request: ShutdownRequest,
     background_tasks: BackgroundTasks,
 ) -> dict[str, str]:
-    """Request a shutdown from the local service console."""
+    """Request a PIN-protected system shutdown."""
 
-    client_host = (
-        request.client.host
-        if request.client is not None
-        else None
-    )
-
-    if client_host not in {
-        "127.0.0.1",
-        "::1",
-    }:
+    if (
+        shutdown_request.pin
+        != settings.admin.shutdown_pin
+    ):
         logger.warning(
-            "Rejected remote shutdown request from %s",
-            client_host,
+            "Rejected shutdown request: invalid PIN"
         )
 
         raise HTTPException(
             status_code=403,
-            detail="Shutdown is only allowed locally.",
+            detail="Invalid shutdown PIN.",
         )
 
     logger.warning(
-        "Shutdown requested from local console"
+        "Shutdown requested with valid PIN"
     )
 
     background_tasks.add_task(
@@ -326,7 +322,6 @@ async def admin_shutdown(
         "status": "accepted",
         "message": "System shutdown requested.",
     }
-
 
 @router.get(
     "/backgrounds"

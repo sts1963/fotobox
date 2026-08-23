@@ -73,19 +73,6 @@ var printerTestButton =
 var printerTestStatus =
     document.getElementById("printer-test-status");
 
-var shutdownButton =
-    document.getElementById("shutdown-button");
-
-var shutdownDialog =
-    document.getElementById("shutdown-dialog");
-
-var shutdownCancel =
-    document.getElementById("shutdown-cancel");
-
-var shutdownConfirm =
-    document.getElementById("shutdown-confirm");
-
-
 function requestJson(
     method,
     url,

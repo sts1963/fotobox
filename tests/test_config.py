@@ -55,6 +55,8 @@ background:
 printer:
   enabled: false
   name: "fotobox"
+admin:
+  "shutdown_pin": 1234
 """,
         encoding="utf-8",
     )

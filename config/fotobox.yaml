@@ -33,3 +33,5 @@ background:
 printer:
   enabled: true
   name: fotobox
+admin:
+  shutdown_pin: "1234"
