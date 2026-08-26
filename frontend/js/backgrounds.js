@@ -1153,279 +1153,97 @@ function loadLibrary() {
 function createBackgroundItem(
     filename
 ) {
-    var item =
-        document.createElement(
-            "div"
-        );
+    var item = document.createElement("div");
+    item.className = "library-item-wrapper";
 
-    item.className =
-        "library-item-wrapper";
+    var imageBlock = document.createElement("div");
+    imageBlock.className = "library-item";
 
-    var selectButton =
-        document.createElement(
-            "button"
-        );
+    var image = document.createElement("img");
+    image.src = libraryImageUrl(filename);
+    image.alt = filename;
 
-    selectButton.type =
-        "button";
+    var caption = document.createElement("span");
+    caption.textContent = filename;
 
-    selectButton.className =
-        "library-item";
+    imageBlock.appendChild(image);
+    imageBlock.appendChild(caption);
+    item.appendChild(imageBlock);
 
-    var image =
-        document.createElement(
-            "img"
-        );
+    var activeSlots = getActiveSlots(filename);
+    var isActive = activeSlots.length > 0;
 
-    image.src =
-        libraryImageUrl(
-            filename
-        );
+    if (currentSelectionMode === "random") {
+        item.className += " random-pool-item";
 
-    image.alt =
-        filename;
-
-    var caption =
-        document.createElement(
-            "span"
-        );
-
-    caption.textContent =
-        filename;
-
-    selectButton.appendChild(
-        image
-    );
-
-    selectButton.appendChild(
-        caption
-    );
-
-    var activeSlots =
-        getActiveSlots(
-            filename
-        );
-
-    var isActive =
-        activeSlots.length > 0;
-
-        var activeSlots =
-        getActiveSlots(
-            filename
-        );
-
-    var isActive =
-        activeSlots.length > 0;
-
-
-    /*
-     * First add the image itself.
-     */
-    item.appendChild(
-        selectButton
-    );
-
-
-    if (
-        currentSelectionMode === "random"
-    ) {
-        item.className +=
-            " random-pool-item";
-
-        var poolBadge =
-            document.createElement(
-                "div"
-            );
-
-        poolBadge.className =
-            "pool-badge";
-
-        poolBadge.textContent =
-            "ZUFALLSPOOL";
-
-        item.appendChild(
-            poolBadge
-        );
-
-        selectButton.onclick =
-            function () {
-                return false;
-            };
-
+        var poolBadge = document.createElement("div");
+        poolBadge.className = "pool-badge";
+        poolBadge.textContent = "ZUFALLSPOOL";
+        item.appendChild(poolBadge);
     } else {
-
         if (isActive) {
-            item.className +=
-                " active-library-item";
+            item.className += " active-library-item";
 
-            var badge =
-                document.createElement(
-                    "div"
-                );
-
-            badge.className =
-                "active-badge";
-
+            var badge = document.createElement("div");
+            badge.className = "active-badge";
             badge.textContent =
-                "AKTIV: Foto "
-                + activeSlots.join(
-                    ", "
-                );
-
-            item.appendChild(
-                badge
-            );
+                "AKTIV: Foto " + activeSlots.join(", ");
+            item.appendChild(badge);
         }
 
-
-        selectButton.onclick =
-            function () {
-                openSelection(
-                    filename
-                );
-            };
-
-
-        var assignButton =
-            document.createElement(
-                "button"
-            );
-
-        assignButton.type =
-            "button";
-
-        assignButton.className =
-            "assign-background-item";
-
-        assignButton.textContent =
-            "Zuordnen";
-
-        assignButton.onclick =
-            function () {
-                openSelection(
-                    filename
-                );
-            };
-
-        item.appendChild(
-            assignButton
-        );
+        var assignButton = document.createElement("button");
+        assignButton.type = "button";
+        assignButton.className = "assign-background-item";
+        assignButton.textContent = "Zuordnen";
+        assignButton.onclick = function () {
+            openSelection(filename);
+        };
+        item.appendChild(assignButton);
     }
 
-    var rotateControls =
-        document.createElement(
-            "div"
-        );
+    var rotateControls = document.createElement("div");
+    rotateControls.className = "rotate-controls";
 
-    rotateControls.className =
-        "rotate-controls";
+    var rotateLeftButton = document.createElement("button");
+    rotateLeftButton.type = "button";
+    rotateLeftButton.className = "rotate-background-item";
+    rotateLeftButton.textContent = "↶ 90°";
+    rotateLeftButton.title = "90° nach links drehen";
+    rotateLeftButton.onclick = function () {
+        rotateBackground(filename, 90);
+    };
 
-    var rotateLeftButton =
-        document.createElement(
-            "button"
-        );
+    var rotateRightButton = document.createElement("button");
+    rotateRightButton.type = "button";
+    rotateRightButton.className = "rotate-background-item";
+    rotateRightButton.textContent = "↷ 90°";
+    rotateRightButton.title = "90° nach rechts drehen";
+    rotateRightButton.onclick = function () {
+        rotateBackground(filename, -90);
+    };
 
-    rotateLeftButton.type =
-        "button";
+    rotateControls.appendChild(rotateLeftButton);
+    rotateControls.appendChild(rotateRightButton);
+    item.appendChild(rotateControls);
 
-    rotateLeftButton.className =
-        "rotate-background-item";
-
-    rotateLeftButton.textContent =
-        "↶ 90°";
-
-    rotateLeftButton.title =
-        "90° nach links drehen";
-
-    rotateLeftButton.onclick =
-        function () {
-            rotateBackground(
-                filename,
-                90
-            );
-        };
-
-    var rotateRightButton =
-        document.createElement(
-            "button"
-        );
-
-    rotateRightButton.type =
-        "button";
-
-    rotateRightButton.className =
-        "rotate-background-item";
-
-    rotateRightButton.textContent =
-        "↷ 90°";
-
-    rotateRightButton.title =
-        "90° nach rechts drehen";
-
-    rotateRightButton.onclick =
-        function () {
-            rotateBackground(
-                filename,
-                -90
-            );
-        };
-
-    rotateControls.appendChild(
-        rotateLeftButton
-    );
-
-    rotateControls.appendChild(
-        rotateRightButton
-    );
-
-    var deleteButton =
-        document.createElement(
-            "button"
-        );
-
-    deleteButton.type =
-        "button";
-
-    deleteButton.className =
-        "delete-library-item";
-
-    deleteButton.textContent =
-        "Löschen";
-
-    /*
-     * The backend currently protects backgrounds that
-     * are used by one of the fixed slots. Keep the same
-     * rule in the UI, even while random mode is active.
-     */
-    deleteButton.disabled =
-        isActive;
+    var deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "delete-library-item";
+    deleteButton.textContent = "Löschen";
+    deleteButton.disabled = isActive;
 
     if (isActive) {
         deleteButton.title =
-            "Ein fest zugeordneter Hintergrund "
-            + "kann nicht gelöscht werden.";
+            "Ein fest zugeordneter Hintergrund kann nicht gelöscht werden.";
     }
 
-    deleteButton.onclick =
-        function () {
-            deleteBackground(
-                filename
-            );
-        };
+    deleteButton.onclick = function () {
+        deleteBackground(filename);
+    };
 
-    item.appendChild(
-        selectButton
-    );
-
-    item.appendChild(
-        deleteButton
-    );
-
-    library.appendChild(
-        item
-    );
+    item.appendChild(deleteButton);
+    library.appendChild(item);
 }
-
 
 function selectBackground(
     slot

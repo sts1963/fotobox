@@ -824,11 +824,35 @@ form button,
 .rotate-background-item:active {
     background: #d5d8df;
 }
-.pool-badge {
-    left: auto;
-    right: 12px;
+
+
+/* Definitive background-card action layout */
+.assign-background-item {
+    display: block;
+    width: 100%;
+    margin-top: 5px;
+    padding: 7px;
+    border: none;
+    border-radius: 6px;
+    background: #2457a7;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
 }
-.pool-badge {
-    left: auto;
-    right: 12px;
+
+.rotate-controls {
+    display: -webkit-flex;
+    display: flex;
+    width: 100%;
+    gap: 5px;
+    margin-top: 5px;
+}
+
+.rotate-controls .rotate-background-item {
+    display: block;
+    width: 49%;
+    -webkit-flex: 1 1 0;
+    flex: 1 1 0;
+    margin: 0;
 }
