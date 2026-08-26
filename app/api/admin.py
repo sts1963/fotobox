@@ -122,13 +122,6 @@ def admin_logs(
         "lines": lines,
     }
 
-@router.delete(
-    "/logos/{filename}"
-)
-@router.post(
-    "/printer/test"
-)
-
 @router.get(
     "/sessions"
 )
@@ -201,6 +194,9 @@ def download_collages() -> StreamingResponse:
         },
     )
 
+@router.post(
+    "/printer/test"
+)
 def printer_test() -> dict[str, str]:
     """Generate and print a diagnostic page."""
 
