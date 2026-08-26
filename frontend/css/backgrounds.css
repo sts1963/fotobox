@@ -493,10 +493,11 @@ form button,
 
 .active-badge,
 .pool-badge {
-    position: absolute;
+    position: static;
 
-    top: 12px;
-    left: 12px;
+    display: block;
+
+    margin: 5px 0;
 
     padding: 4px 7px;
 
@@ -506,6 +507,8 @@ form button,
 
     font-size: 10px;
     font-weight: 700;
+
+    text-align: center;
 }
 
 .active-badge {
@@ -514,6 +517,41 @@ form button,
 
 .pool-badge {
     background: #58751c;
+}
+
+.background-actions {
+    display: -webkit-flex;
+    display: flex;
+
+    gap: 5px;
+
+    margin-top: 5px;
+}
+
+.assign-background-item,
+.rotate-background-item {
+    -webkit-flex: 1 1 auto;
+    flex: 1 1 auto;
+
+    padding: 7px;
+
+    border: none;
+    border-radius: 6px;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.assign-background-item {
+    background: #2457a7;
+    color: #fff;
+}
+
+.rotate-background-item {
+    background: #e7e9ee;
+    color: #202124;
 }
 
 .delete-library-item {
@@ -750,4 +788,47 @@ form button,
 
         margin-bottom: 10px;
     }
+}
+
+
+/*
+ * Background rotation controls
+ */
+.rotate-controls {
+    display: -webkit-flex;
+    display: flex;
+
+    gap: 5px;
+
+    margin-top: 5px;
+}
+
+.rotate-background-item {
+    -webkit-flex: 1 1 50%;
+    flex: 1 1 50%;
+
+    padding: 7px;
+
+    border: none;
+    border-radius: 6px;
+
+    background: #e7e9ee;
+    color: #202124;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.rotate-background-item:active {
+    background: #d5d8df;
+}
+.pool-badge {
+    left: auto;
+    right: 12px;
+}
+.pool-badge {
+    left: auto;
+    right: 12px;
 }

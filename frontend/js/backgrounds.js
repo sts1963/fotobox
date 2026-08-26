@@ -966,6 +966,54 @@ function createLogoItem(
 }
 
 
+function rotateBackground(
+    filename,
+    degrees
+) {
+    requestJson(
+        "POST",
+        "/api/admin/backgrounds/"
+            + encodeURIComponent(
+                filename
+            )
+            + "/rotate",
+        {
+            degrees: degrees
+        },
+
+        function () {
+            loadLibrary();
+
+            var activeSlots =
+                getActiveSlots(
+                    filename
+                );
+
+            var i;
+
+            for (
+                i = 0;
+                i < activeSlots.length;
+                i += 1
+            ) {
+                refreshSlot(
+                    activeSlots[i],
+                    filename
+                );
+            }
+        },
+
+        function (error) {
+            window.alert(
+                "Hintergrund konnte nicht "
+                + "gedreht werden: "
+                + error
+            );
+        }
+    );
+}
+
+
 function deleteBackground(
     filename
 ) {
@@ -1161,6 +1209,23 @@ function createBackgroundItem(
     var isActive =
         activeSlots.length > 0;
 
+        var activeSlots =
+        getActiveSlots(
+            filename
+        );
+
+    var isActive =
+        activeSlots.length > 0;
+
+
+    /*
+     * First add the image itself.
+     */
+    item.appendChild(
+        selectButton
+    );
+
+
     if (
         currentSelectionMode === "random"
     ) {
@@ -1182,16 +1247,13 @@ function createBackgroundItem(
             poolBadge
         );
 
-        /*
-         * In random mode there is no individual slot
-         * assignment. The complete library is the pool.
-         */
         selectButton.onclick =
             function () {
                 return false;
             };
 
     } else {
+
         if (isActive) {
             item.className +=
                 " active-library-item";
@@ -1215,13 +1277,106 @@ function createBackgroundItem(
             );
         }
 
+
         selectButton.onclick =
             function () {
                 openSelection(
                     filename
                 );
             };
+
+
+        var assignButton =
+            document.createElement(
+                "button"
+            );
+
+        assignButton.type =
+            "button";
+
+        assignButton.className =
+            "assign-background-item";
+
+        assignButton.textContent =
+            "Zuordnen";
+
+        assignButton.onclick =
+            function () {
+                openSelection(
+                    filename
+                );
+            };
+
+        item.appendChild(
+            assignButton
+        );
     }
+
+    var rotateControls =
+        document.createElement(
+            "div"
+        );
+
+    rotateControls.className =
+        "rotate-controls";
+
+    var rotateLeftButton =
+        document.createElement(
+            "button"
+        );
+
+    rotateLeftButton.type =
+        "button";
+
+    rotateLeftButton.className =
+        "rotate-background-item";
+
+    rotateLeftButton.textContent =
+        "↶ 90°";
+
+    rotateLeftButton.title =
+        "90° nach links drehen";
+
+    rotateLeftButton.onclick =
+        function () {
+            rotateBackground(
+                filename,
+                90
+            );
+        };
+
+    var rotateRightButton =
+        document.createElement(
+            "button"
+        );
+
+    rotateRightButton.type =
+        "button";
+
+    rotateRightButton.className =
+        "rotate-background-item";
+
+    rotateRightButton.textContent =
+        "↷ 90°";
+
+    rotateRightButton.title =
+        "90° nach rechts drehen";
+
+    rotateRightButton.onclick =
+        function () {
+            rotateBackground(
+                filename,
+                -90
+            );
+        };
+
+    rotateControls.appendChild(
+        rotateLeftButton
+    );
+
+    rotateControls.appendChild(
+        rotateRightButton
+    );
 
     var deleteButton =
         document.createElement(

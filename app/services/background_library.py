@@ -290,6 +290,82 @@ class BackgroundLibraryService:
 
         return result
 
+    def rotate_background(
+        self,
+        filename: str,
+        degrees: int,
+    ) -> None:
+        """Rotate a library image and refresh active slot copies."""
+
+        if degrees not in (
+            -90,
+            90,
+        ):
+            raise BackgroundLibraryError(
+                "Rotation must be -90 or 90 degrees."
+            )
+
+        safe_filename = Path(
+            filename
+        ).name
+
+        path = (
+            self.library_directory
+            / safe_filename
+        )
+
+        if not path.is_file():
+            raise BackgroundLibraryError(
+                f"Background does not exist: {filename}"
+            )
+
+        active_before = self.active_backgrounds()
+
+        try:
+            with Image.open(
+                path
+            ) as image:
+                image.load()
+
+                image = image.convert(
+                    "RGB"
+                )
+
+                # PIL rotates counter-clockwise for positive angles.
+                rotated = image.rotate(
+                    degrees,
+                    expand=True,
+                )
+
+                self._save_atomic(
+                    rotated,
+                    path,
+                )
+
+        except BackgroundLibraryError:
+            raise
+
+        except Exception as exc:
+            raise BackgroundLibraryError(
+                "Background could not be rotated."
+            ) from exc
+
+        for (
+            slot,
+            active_filename,
+        ) in active_before.items():
+            if active_filename == safe_filename:
+                self.select_background(
+                    slot=slot,
+                    filename=safe_filename,
+                )
+
+        logger.info(
+            "Background rotated: %s degrees=%s",
+            path,
+            degrees,
+        )
+
     def delete_background(
         self,
         filename: str,

@@ -46,6 +46,10 @@ class BackgroundSelection(BaseModel):
     filename: str
 
 
+class BackgroundRotation(BaseModel):
+    degrees: int
+
+
 class LogoSelection(BaseModel):
     filename: str
 
@@ -335,7 +339,39 @@ def admin_backgrounds() -> dict:
             background_library_service
             .list_backgrounds()
         ),
+        "active": (
+            background_library_service
+            .active_backgrounds()
+        ),
     }
+
+@router.post(
+    "/backgrounds/{filename}/rotate"
+)
+def rotate_background(
+    filename: str,
+    rotation: BackgroundRotation,
+) -> dict[str, str]:
+    """Rotate one background image by 90 degrees."""
+
+    try:
+        background_library_service.rotate_background(
+            filename=filename,
+            degrees=rotation.degrees,
+        )
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    return {
+        "status": "rotated",
+        "filename": filename,
+        "degrees": str(rotation.degrees),
+    }
+
 
 @router.delete(
     "/backgrounds/{filename}"

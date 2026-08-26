@@ -18,7 +18,7 @@ collage:
   jpeg_quality: 95
   logo: assets/logo.png
 background:
-  enabled: false
+  enabled: true
   mode: greenscreen
   images:
   - assets/backgrounds/background_01.jpg
