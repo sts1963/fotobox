@@ -30,9 +30,9 @@ background:
     saturation_min: 35
     value_min: 5
     feather: 3
-  selection_mode: fixed
+  selection_mode: random
 printer:
   enabled: true
   name: fotobox
 admin:
-  shutdown_pin: "1234"
+  shutdown_pin: '1234'

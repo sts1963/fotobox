@@ -65,6 +65,10 @@ class SettingsAdminService:
                     self.photo_session_service
                     .backgrounds_enabled
                 ),
+                "selection_mode": (
+                    self.photo_session_service
+                    .background_selection
+                ),
                 "greenscreen": {
                     "hue_min": (
                         self.background_processor
@@ -88,6 +92,75 @@ class SettingsAdminService:
                     ),
                 },
             },
+        }
+
+    def update_background_mode(
+        self,
+        *,
+        enabled: bool,
+        selection_mode: str,
+    ) -> dict[str, Any]:
+        """Persist and immediately apply background mode settings."""
+
+        if selection_mode not in (
+            "fixed",
+            "random",
+        ):
+            raise SettingsAdminError(
+                "Background selection mode must be "
+                "'fixed' or 'random'."
+            )
+
+        raw = self._read_raw_config()
+
+        background = raw.get(
+            "background"
+        )
+
+        if not isinstance(
+            background,
+            dict,
+        ):
+            raise SettingsAdminError(
+                "Invalid background configuration."
+            )
+
+        background[
+            "enabled"
+        ] = enabled
+
+        background[
+            "selection_mode"
+        ] = selection_mode
+
+        self._validate_and_replace(
+            raw
+        )
+
+        self.photo_session_service.set_backgrounds_enabled(
+            enabled
+        )
+
+        self.photo_session_service.set_background_selection_mode(
+            selection_mode
+        )
+
+        logger.info(
+            "Background mode settings updated: "
+            "enabled=%s selection_mode=%s",
+            enabled,
+            selection_mode,
+        )
+
+        return {
+            "enabled": (
+                self.photo_session_service
+                .backgrounds_enabled
+            ),
+            "selection_mode": (
+                self.photo_session_service
+                .background_selection
+            ),
         }
 
     def update(

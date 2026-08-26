@@ -451,33 +451,24 @@ def background_settings() -> dict:
 def update_background_settings(
     update: BackgroundModeUpdate,
 ) -> dict:
-    """Update virtual background settings."""
+    """Persist and apply virtual background settings."""
 
     try:
-        photo_session_service.set_backgrounds_enabled(
-            update.enabled
+        return (
+            settings_admin_service
+            .update_background_mode(
+                enabled=update.enabled,
+                selection_mode=(
+                    update.selection_mode
+                ),
+            )
         )
 
-        photo_session_service.set_background_selection_mode(
-            update.selection_mode
-        )
-
-    except ValueError as exc:
+    except Exception as exc:
         raise HTTPException(
             status_code=400,
             detail=str(exc),
         ) from exc
-
-    return {
-        "enabled": (
-            photo_session_service
-            .backgrounds_enabled
-        ),
-        "selection_mode": (
-            photo_session_service
-            .background_selection
-        ),
-    }
 
 
 @router.get(
