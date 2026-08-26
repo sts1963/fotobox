@@ -25,12 +25,12 @@ background:
   - assets/backgrounds/background_02.jpg
   - assets/backgrounds/background_03.jpg
   greenscreen:
-    hue_min: 25
-    hue_max: 105
-    saturation_min: 35
-    value_min: 5
+    hue_min: 40
+    hue_max: 85
+    saturation_min: 70
+    value_min: 20
     feather: 3
-  selection_mode: fixed
+  selection_mode: random
 printer:
   enabled: true
   name: fotobox
