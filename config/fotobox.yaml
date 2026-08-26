@@ -30,6 +30,7 @@ background:
     saturation_min: 35
     value_min: 5
     feather: 3
+  selection_mode: fixed
 printer:
   enabled: true
   name: fotobox

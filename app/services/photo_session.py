@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import random
 from pathlib import Path
 
 from app.core.events import EventBus
@@ -17,6 +18,10 @@ from app.services.session_manager import (
 from app.services.background import (
     BackgroundProcessingError,
     BackgroundProcessor,
+)
+
+from app.services.background_library import (
+    BackgroundLibraryService,
 )
 
 from app.services.printing import (
@@ -40,11 +45,13 @@ class PhotoSessionService:
         camera_service: CameraService,
         collage_generator: CollageGenerator,
         background_processor: BackgroundProcessor,
+        background_library_service: BackgroundLibraryService,
         print_service: PrintService,
         event_bus: EventBus,
         session_root: Path = Path("data/sessions"),
         logo_path: Path = Path("assets/logo.png"),
         background_enabled: bool = False,
+        background_selection_mode: str = "fixed",
         background_images: tuple[Path, ...] = (),
         countdown_seconds: int = 5,
         photo_count: int = 3,
@@ -55,7 +62,13 @@ class PhotoSessionService:
         self.collage_generator = collage_generator
         self.event_bus = event_bus
         self.background_processor = background_processor
+        self.background_library_service = (
+            background_library_service
+        )
         self.background_enabled = background_enabled
+        self.background_selection_mode = (
+            background_selection_mode
+        )
         self.background_images = background_images
         self.session_root = session_root
         self.logo_path = logo_path
@@ -87,6 +100,34 @@ class PhotoSessionService:
             "enabled"
             if enabled
             else "disabled",
+        )
+
+    @property
+    def background_selection(self) -> str:
+        """Return the current background selection mode."""
+
+        return self.background_selection_mode
+
+    def set_background_selection_mode(
+        self,
+        mode: str,
+    ) -> None:
+        """Change the background selection mode at runtime."""
+
+        if mode not in (
+            "fixed",
+            "random",
+        ):
+            raise ValueError(
+                "Background selection mode must be "
+                "'fixed' or 'random'."
+            )
+
+        self.background_selection_mode = mode
+
+        logger.info(
+            "Background selection mode changed: %s",
+            mode,
         )
 
     @property
@@ -396,6 +437,53 @@ class PhotoSessionService:
 
         await self._publish_state()
 
+    def _select_backgrounds(
+        self,
+        photo_count: int,
+    ) -> list[Path]:
+        """Return the backgrounds to use for one session."""
+
+        if self.background_selection_mode == "fixed":
+            if len(self.background_images) != photo_count:
+                raise BackgroundProcessingError(
+                    "Number of configured background images "
+                    "does not match number of photos."
+                )
+
+            return list(
+                self.background_images
+            )
+
+        if self.background_selection_mode == "random":
+            filenames = (
+                self.background_library_service
+                .list_backgrounds()
+            )
+
+            if len(filenames) < photo_count:
+                raise BackgroundProcessingError(
+                    "At least three background images "
+                    "are required for random selection."
+                )
+
+            selected = random.sample(
+                filenames,
+                k=photo_count,
+            )
+
+            return [
+                (
+                    self.background_library_service
+                    .library_directory
+                    / filename
+                )
+                for filename in selected
+            ]
+
+        raise BackgroundProcessingError(
+            "Unknown background selection mode."
+        )
+
     async def _prepare_photos(
         self,
     ) -> list[Path]:
@@ -417,18 +505,17 @@ class PhotoSessionService:
 
             return original_paths
 
-        if len(self.background_images) != len(
-            original_paths
-        ):
-            raise BackgroundProcessingError(
-                "Number of configured background images "
-                "does not match number of photos."
+        background_paths = (
+            self._select_backgrounds(
+                len(original_paths)
             )
+        )
 
         logger.info(
             "Applying virtual backgrounds: "
-            "session_id=%s",
+            "session_id=%s selection_mode=%s",
             session.id,
+            self.background_selection_mode,
         )
 
         processed_paths: list[Path] = []
@@ -443,7 +530,7 @@ class PhotoSessionService:
         ) in enumerate(
             zip(
                 original_paths,
-                self.background_images,
+                background_paths,
                 strict=True,
             ),
             start=1,

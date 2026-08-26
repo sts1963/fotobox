@@ -13,171 +13,222 @@
 
     <link
         rel="stylesheet"
-        href="/static/css/backgrounds.css?v=11"
+        href="/static/css/backgrounds.css?v=12"
     >
 </head>
 
 <body>
 
 <main>
-<section class="greenscreen-settings">
 
-    <div>
-        <h2>Virtueller Hintergrund</h2>
+    <section class="greenscreen-settings">
 
-        <p>
-            Greenscreen-Verarbeitung für
-            neue Fotos verwenden
-        </p>
-    </div>
+        <div class="greenscreen-main">
 
-    <label class="switch">
+            <div>
+                <h2>Virtueller Hintergrund</h2>
 
-        <input
-            id="greenscreen-enabled"
-            type="checkbox"
-        >
+                <p>
+                    Greenscreen-Verarbeitung für
+                    neue Fotos verwenden
+                </p>
+            </div>
 
-        <span class="slider"></span>
+            <label class="switch">
 
-    </label>
+                <input
+                    id="greenscreen-enabled"
+                    type="checkbox"
+                >
 
-</section>
+                <span class="slider"></span>
+
+            </label>
+
+        </div>
+
+
+        <div class="selection-mode">
+
+            <h3>Auswahl der Hintergründe</h3>
+
+            <label class="mode-option">
+
+                <input
+                    id="selection-mode-fixed"
+                    name="background-selection-mode"
+                    type="radio"
+                    value="fixed"
+                >
+
+                <span>
+                    <strong>Fest zuordnen</strong>
+                    <small>
+                        Für Foto 1, 2 und 3 wird jeweils
+                        ein bestimmter Hintergrund verwendet.
+                    </small>
+                </span>
+
+            </label>
+
+
+            <label class="mode-option">
+
+                <input
+                    id="selection-mode-random"
+                    name="background-selection-mode"
+                    type="radio"
+                    value="random"
+                >
+
+                <span>
+                    <strong>Zufällig auswählen</strong>
+                    <small>
+                        Für jede Session werden drei
+                        unterschiedliche Motive zufällig
+                        aus der Bibliothek gewählt.
+                    </small>
+                </span>
+
+            </label>
+
+            <div
+                id="selection-mode-status"
+                class="mode-status"
+            ></div>
+
+        </div>
+
+    </section>
+
 
     <header>
         <div>
             <h1>Fotobox Hintergründe</h1>
+
             <p>
-                Motive für die drei Fotos auswählen
+                Hintergründe und Logo verwalten
             </p>
         </div>
-
     </header>
 
-<nav class="admin-nav">
-<a href="/">
-    Fotobox
-</a>
-    <a href="/console">
-        Konsole
-    </a>
 
-    <a
-        href="/backgrounds"
-        class="active"
+    <nav class="admin-nav">
+
+        <a href="/">
+            Fotobox
+        </a>
+
+        <a href="/console">
+            Konsole
+        </a>
+
+        <a
+            href="/backgrounds"
+            class="active"
+        >
+            Gestaltung
+        </a>
+
+        <a href="/settings">
+            Einstellungen
+        </a>
+
+        <a href="/sessions">
+            Sessions
+        </a>
+
+    </nav>
+
+
+    <section
+        id="fixed-background-section"
+        class="fixed-background-section"
     >
-        Gestaltung
-    </a>
 
-    <a href="/settings">
-        Einstellungen
-    </a>
-</nav>
+        <div class="section-heading">
+            <div>
+                <h2>Feste Zuordnung</h2>
 
-    <section class="slots">
-
-        <article class="slot">
-            <h2>Foto 1</h2>
-
-            <img
-                id="slot-image-1"
-                src="/background-assets/background_01.jpg"
-                alt="Hintergrund Foto 1"
-            >
-
-            <div id="slot-name-1">
-                background_01.jpg
+                <p>
+                    Ein Motiv aus der Bibliothek antippen,
+                    um es einem Foto zuzuordnen.
+                </p>
             </div>
-        </article>
+        </div>
 
 
-        <article class="slot">
-            <h2>Foto 2</h2>
+        <div class="slots">
 
-            <img
-                id="slot-image-2"
-                src="/background-assets/background_02.jpg"
-                alt="Hintergrund Foto 2"
-            >
+            <article class="slot">
+                <h3>Foto 1</h3>
 
-            <div id="slot-name-2">
-                background_02.jpg
-            </div>
-        </article>
+                <img
+                    id="slot-image-1"
+                    src="/background-assets/background_01.jpg"
+                    alt="Hintergrund Foto 1"
+                >
+
+                <div id="slot-name-1">
+                    background_01.jpg
+                </div>
+            </article>
 
 
-        <article class="slot">
-            <h2>Foto 3</h2>
+            <article class="slot">
+                <h3>Foto 2</h3>
 
-            <img
-                id="slot-image-3"
-                src="/background-assets/background_03.jpg"
-                alt="Hintergrund Foto 3"
-            >
+                <img
+                    id="slot-image-2"
+                    src="/background-assets/background_02.jpg"
+                    alt="Hintergrund Foto 2"
+                >
 
-            <div id="slot-name-3">
-                background_03.jpg
-            </div>
-        </article>
+                <div id="slot-name-2">
+                    background_02.jpg
+                </div>
+            </article>
+
+
+            <article class="slot">
+                <h3>Foto 3</h3>
+
+                <img
+                    id="slot-image-3"
+                    src="/background-assets/background_03.jpg"
+                    alt="Hintergrund Foto 3"
+                >
+
+                <div id="slot-name-3">
+                    background_03.jpg
+                </div>
+            </article>
+
+        </div>
 
     </section>
 
-<section class="logo-section">
 
-    <h2>Logo</h2>
-
-    <div class="logo-management">
-
-        <div class="active-logo">
-            <h3>Aktuelles Logo</h3>
-
-            <div class="logo-preview">
-                <img
-                    id="active-logo-image"
-                    src="/active-logo"
-                    alt="Aktuelles Logo"
-                >
-            </div>
-
-            <div id="active-logo-status">
-                Aktives Logo
-            </div>
-        </div>
-
-        <div class="logo-upload">
-            <h3>Neues Logo hochladen</h3>
-
-            <form id="logo-upload-form">
-
-                <input
-                    id="logo-upload-file"
-                    name="file"
-                    type="file"
-                    accept="image/png,image/jpeg"
-                    required
-                >
-
-                <button type="submit">
-                    Hochladen
-                </button>
-
-            </form>
-
-            <div id="logo-upload-status"></div>
-        </div>
-
-    </div>
-
-    <h3>Logo-Bibliothek</h3>
-
-    <div
-        id="logo-library"
-        class="library logo-library"
+    <section
+        id="random-background-section"
+        class="random-background-section hidden"
     >
-        Wird geladen …
-    </div>
 
-</section>
+        <h2>Zufallsauswahl aktiv</h2>
+
+        <p>
+            Alle Bilder in der Hintergrund-Bibliothek gehören
+            zum Zufallspool. Für jede neue Fotosession werden
+            drei unterschiedliche Motive ausgewählt.
+        </p>
+
+        <p>
+            Es müssen mindestens drei Hintergrundbilder
+            vorhanden sein.
+        </p>
+
+    </section>
+
 
     <section class="upload-section">
 
@@ -199,18 +250,105 @@
 
         </form>
 
-        <div id="upload-status"></div>
+        <div
+            id="upload-status"
+            class="status-message"
+        ></div>
 
     </section>
 
 
-    <section>
+    <section class="library-section">
 
-        <h2>Bibliothek</h2>
+        <div class="section-heading">
+
+            <div>
+                <h2 id="library-title">
+                    Hintergrund-Bibliothek
+                </h2>
+
+                <p id="library-description">
+                    Vorhandene Motive verwalten
+                </p>
+            </div>
+
+            <div
+                id="library-count"
+                class="library-count"
+            >
+                –
+            </div>
+
+        </div>
 
         <div
             id="background-library"
             class="library"
+        >
+            Wird geladen …
+        </div>
+
+    </section>
+
+
+    <section class="logo-section">
+
+        <h2>Logo</h2>
+
+        <div class="logo-management">
+
+            <div class="active-logo">
+                <h3>Aktuelles Logo</h3>
+
+                <div class="logo-preview">
+
+                    <img
+                        id="active-logo-image"
+                        src="/active-logo"
+                        alt="Aktuelles Logo"
+                    >
+
+                </div>
+
+                <div id="active-logo-status">
+                    Aktives Logo
+                </div>
+            </div>
+
+
+            <div class="logo-upload">
+                <h3>Neues Logo hochladen</h3>
+
+                <form id="logo-upload-form">
+
+                    <input
+                        id="logo-upload-file"
+                        name="file"
+                        type="file"
+                        accept="image/png,image/jpeg"
+                        required
+                    >
+
+                    <button type="submit">
+                        Hochladen
+                    </button>
+
+                </form>
+
+                <div
+                    id="logo-upload-status"
+                    class="status-message"
+                ></div>
+            </div>
+
+        </div>
+
+
+        <h3>Logo-Bibliothek</h3>
+
+        <div
+            id="logo-library"
+            class="library logo-library"
         >
             Wird geladen …
         </div>
@@ -259,6 +397,7 @@
             <button
                 id="selection-cancel"
                 type="button"
+                class="secondary"
             >
                 Abbrechen
             </button>
@@ -270,7 +409,7 @@
 </dialog>
 
 
-<script src="/static/js/backgrounds.js?v=5"></script>
+<script src="/static/js/backgrounds.js?v=6"></script>
 
 </body>
 </html>

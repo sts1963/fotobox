@@ -2,8 +2,12 @@
     box-sizing: border-box;
 }
 
+html,
 body {
     margin: 0;
+    padding: 0;
+
+    min-height: 100%;
 
     font-family:
         -apple-system,
@@ -11,628 +15,49 @@ body {
         "Segoe UI",
         sans-serif;
 
-    background: #111;
-    color: #eee;
+    background: #f4f5f7;
+    color: #202124;
+}
+
+body {
+    padding: 32px;
 }
 
 main {
-    max-width: 1200px;
+    width: 100%;
+    max-width: 1100px;
 
     margin: 0 auto;
-    padding: 1.5rem;
 }
 
 header {
-    display: flex;
-
-    justify-content: space-between;
-    align-items: center;
-
-    gap: 1rem;
-
-    margin-bottom: 1.5rem;
+    margin: 28px 0 18px;
 }
 
 header h1 {
     margin: 0;
+
+    font-size: 32px;
 }
 
 header p {
-    margin: 0.3rem 0 0;
+    margin: 6px 0 0;
 
-    opacity: 0.7;
-}
-
-header a {
-    color: inherit;
+    color: #666;
 }
 
 
-.slots {
-    display: grid;
-
-    grid-template-columns:
-        repeat(3, minmax(0, 1fr));
-
-    gap: 1rem;
-
-    margin-bottom: 2rem;
-}
-
-.slot {
-    background: #1d1d1d;
-
-    border: 1px solid #333;
-    border-radius: 1rem;
-
-    padding: 1rem;
-}
-
-.slot h2 {
-    margin-top: 0;
-}
-
-.slot img {
-    display: block;
-
-    width: 100%;
-    aspect-ratio: 16 / 9;
-
-    object-fit: cover;
-
-    border-radius: 0.6rem;
-}
-
-.slot div {
-    margin-top: 0.6rem;
-
-    font-size: 0.85rem;
-    opacity: 0.7;
-}
-
-
-.upload-section {
-    margin-bottom: 2rem;
-
-    padding: 1rem;
-
-    background: #1d1d1d;
-
-    border: 1px solid #333;
-    border-radius: 1rem;
-}
-
-#upload-form {
-    display: flex;
-
-    gap: 1rem;
-    align-items: center;
-
-    flex-wrap: wrap;
-}
-
-button {
-    padding: 0.8rem 1rem;
-
-    border-radius: 0.6rem;
-    border: 1px solid #555;
-
-    background: #292929;
-    color: #eee;
-
-    cursor: pointer;
-}
-
-button:hover {
-    background: #383838;
-}
-
-
-.library {
-    display: grid;
-
-    grid-template-columns:
-        repeat(
-            auto-fill,
-            minmax(180px, 1fr)
-        );
-
-    gap: 1rem;
-}
-
-.library-item {
-    padding: 0;
-
-    overflow: hidden;
-
-    border: 1px solid #333;
-    border-radius: 0.8rem;
-
-    background: #1d1d1d;
-
-    text-align: left;
-}
-
-.library-item img {
-    display: block;
-
-    width: 100%;
-    aspect-ratio: 16 / 9;
-
-    object-fit: cover;
-}
-
-.library-item span {
-    display: block !important;
-
-    padding: 5px !important;
-
-    font-size: 12px !important;
-
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
-}
-
-#selection-dialog {
-    border: 1px solid #555;
-    border-radius: 1rem;
-
-    background: #1d1d1d;
-    color: #eee;
-
-    padding: 0;
-}
-
-#selection-dialog::backdrop {
-    background: rgba(0, 0, 0, 0.75);
-}
-
-.dialog-content {
-    padding: 1rem;
-
-    max-width: 500px;
-}
-
-#selection-preview {
-    width: 100%;
-    aspect-ratio: 16 / 9;
-
-    object-fit: cover;
-
-    border-radius: 0.6rem;
-}
-
-.dialog-actions {
-    display: flex;
-
-    gap: 0.6rem;
-    flex-wrap: wrap;
-
-    margin-top: 1rem;
-}
-
-
-@media (max-width: 700px) {
-    .slots {
-        grid-template-columns: 1fr;
-    }
-
-    .library {
-        grid-template-columns:
-            repeat(
-                2,
-                minmax(0, 1fr)
-            );
-    }
-}
-
-.logo-section {
-    margin-bottom: 2rem;
-
-    padding: 1rem;
-
-    background: #1d1d1d;
-
-    border: 1px solid #333;
-    border-radius: 1rem;
-}
-
-.logo-management {
-    display: grid;
-
-    grid-template-columns:
-        minmax(0, 1fr)
-        minmax(0, 1fr);
-
-    gap: 1.5rem;
-
-    margin-bottom: 1.5rem;
-}
-
-.logo-preview {
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
-
-    min-height: 180px;
-
-    padding: 1rem;
-
-    background: #fff;
-
-    border-radius: 0.6rem;
-}
-
-.logo-preview img {
-    display: block;
-
-    max-width: 100%;
-    max-height: 180px;
-
-    object-fit: contain;
-}
-
-#active-logo-status {
-    margin-top: 0.6rem;
-
-    font-size: 0.85rem;
-    opacity: 0.7;
-}
-
-#logo-upload-form {
-    display: flex;
-
-    flex-direction: column;
-
-    align-items: flex-start;
-
-    gap: 1rem;
-}
-
-.logo-library .library-item {
-    padding: 0.6rem;
-}
-
-.logo-library .library-item img {
-    object-fit: contain;
-
-    background: #fff;
-
-    padding: 0.5rem;
-}
-
-@media (max-width: 700px) {
-    .logo-management {
-        grid-template-columns: 1fr;
-    }
-}
-
-.greenscreen-settings {
-    display: flex;
-
-    justify-content: space-between;
-    align-items: center;
-
-    gap: 1rem;
-
-    margin-bottom: 1.5rem;
-
-    padding: 1rem;
-
-    background: #1d1d1d;
-
-    border: 1px solid #333;
-    border-radius: 1rem;
-}
-
-.greenscreen-settings h2 {
-    margin: 0;
-}
-
-.greenscreen-settings p {
-    margin: 0.3rem 0 0;
-
-    opacity: 0.7;
-}
-
-.switch {
-    position: relative;
-
-    display: inline-block;
-
-    width: 56px;
-    height: 30px;
-
-    flex: 0 0 auto;
-}
-
-.switch input {
-    opacity: 0;
-
-    width: 0;
-    height: 0;
-}
-
-.slider {
-    position: absolute;
-
-    inset: 0;
-
-    cursor: pointer;
-
-    background: #555;
-
-    border-radius: 30px;
-}
-
-.slider::before {
-    content: "";
-
-    position: absolute;
-
-    width: 24px;
-    height: 24px;
-
-    left: 3px;
-    top: 3px;
-
-    background: white;
-
-    border-radius: 50%;
-
-    transition: transform 0.2s;
-}
-
-.switch input:checked + .slider::before {
-    transform: translateX(26px);
-}
-
-.switch input:checked + .slider {
-    background: #2f7d46;
-}
-
-.library-item-wrapper {
-    float: left !important;
-
-    width: 32.3% !important;
-
-    margin-left: 0.5% !important;
-    margin-right: 0.5% !important;
-    margin-top: 0.5% !important;
-    margin-bottom: 0.5% !important;
-
-    padding: 6px !important;
-}
-
-.active-library-item {
-    border-color: currentColor;
-}
-
-.active-badge {
-    font-weight: 700;
-    text-align: center;
-}
-
-.delete-library-item {
-    display: block !important;
-
-    width: 100% !important;
-
-    margin-top: 5px !important;
-    padding: 7px 4px !important;
-
-    font-size: 13px !important;
-}
-
-.delete-library-item:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
 /*
- * Legacy Safari fallback for the background
- * selection dialog.
+ * Navigation
  */
-
-#selection-dialog[open] {
-    display: block;
-}
-
-#selection-dialog {
-    max-width: 500px;
-}
-
-@media (max-width: 700px) {
-    #selection-dialog {
-        position: fixed;
-
-        left: 5%;
-        right: 5%;
-        top: 10%;
-
-        width: 90%;
-        max-width: none;
-
-        margin: 0;
-
-        z-index: 10000;
-    }
-
-    #selection-preview {
-        width: 100%;
-        height: auto;
-    }
-
-    .dialog-actions button {
-        width: 100%;
-        margin-top: 8px;
-    }
-}
-/*
- * iPad 2 / iOS 9 fallback:
- * CSS Grid is not supported there.
- */
-
-.library {
-    display: flex;
-    flex-wrap: wrap;
-
-    margin-left: -6px;
-    margin-right: -6px;
-}
-
-.library-item {
-    display: block;
-
-    width: 100%;
-}
-
-.library-item img {
-    display: block;
-
-    width: 100%;
-    height: auto;
-
-    object-fit: cover;
-}
-
-.logo-library .library-item img {
-    object-fit: contain;
-}
-/*
- * iPad 2 / iOS 9 layout fallback.
- *
- * Avoid CSS Grid and modern flexbox layout.
- */
-
-
-/* -------------------------------------------------
- * Active background slots: 3 columns
- * ------------------------------------------------- */
-
-.slots {
-    display: block !important;
-
-    width: 100% !important;
-
-    margin-left: -0.5% !important;
-    margin-right: -0.5% !important;
-}
-
-.slots::after {
-    content: "";
-    display: block;
-    clear: both;
-}
-
-.slot {
-    float: left !important;
-
-    width: 32.3% !important;
-
-    margin-left: 0.5% !important;
-    margin-right: 0.5% !important;
-
-    padding: 8px !important;
-}
-
-.slot img {
-    display: block !important;
-
-    width: 100% !important;
-    height: auto !important;
-}
-
-
-/* -------------------------------------------------
- * Background + logo libraries: 2 columns
- * ------------------------------------------------- */
-
-.library {
-    display: block !important;
-
-    width: 100% !important;
-
-    margin: 0 !important;
-}
-
-.library::after {
-    content: "";
-    display: block;
-    clear: both;
-}
-
-.library-item {
-    display: block !important;
-
-    width: 100% !important;
-
-    margin: 0 !important;
-}
-
-.library-item img {
-    display: block !important;
-
-    width: 100% !important;
-    height: auto !important;
-}
-
-.delete-library-item {
-    display: block !important;
-
-    width: 100% !important;
-
-    margin-top: 6px !important;
-}
-
-
-/* -------------------------------------------------
- * Greenscreen switch
- *
- * Old Safari has problems with our custom switch.
- * Use the native checkbox instead.
- * ------------------------------------------------- */
-
-.greenscreen-settings .switch {
-    display: block !important;
-
-    width: auto !important;
-    height: auto !important;
-
-    position: static !important;
-}
-
-.greenscreen-settings .switch input {
-    display: block !important;
-
-    opacity: 1 !important;
-
-    position: static !important;
-
-    width: 30px !important;
-    height: 30px !important;
-
-    margin: 0 !important;
-
-    -webkit-appearance: checkbox !important;
-    appearance: checkbox !important;
-}
-
-.greenscreen-settings .slider {
-    display: none !important;
-}
 .admin-nav {
-    display: flex;
-
-    gap: 10px;
-
     margin-bottom: 24px;
 }
 
 .admin-nav a {
     display: inline-block;
 
+    margin: 0 7px 8px 0;
     padding: 10px 16px;
 
     border-radius: 8px;
@@ -646,19 +71,683 @@ button:hover {
 
 .admin-nav a.active {
     background: #2457a7;
-    color: white;
+    color: #fff;
 }
 
+
+/*
+ * Shared cards / sections
+ */
+.greenscreen-settings,
+.fixed-background-section,
+.random-background-section,
+.upload-section,
+.library-section,
+.logo-section {
+    margin-bottom: 24px;
+    padding: 22px;
+
+    background: #fff;
+
+    border-radius: 12px;
+
+    box-shadow:
+        0 1px 4px
+        rgba(0, 0, 0, 0.12);
+}
+
+.greenscreen-settings h2,
+.fixed-background-section h2,
+.random-background-section h2,
+.upload-section h2,
+.library-section h2,
+.logo-section h2 {
+    margin-top: 0;
+}
+
+.greenscreen-main {
+    display: -webkit-flex;
+    display: flex;
+
+    -webkit-align-items: center;
+    align-items: center;
+
+    -webkit-justify-content: space-between;
+    justify-content: space-between;
+
+    gap: 20px;
+}
+
+.greenscreen-main p {
+    margin-bottom: 0;
+
+    color: #666;
+}
+
+
+/*
+ * On/off switch
+ */
+.switch {
+    position: relative;
+
+    display: inline-block;
+
+    width: 58px;
+    height: 32px;
+
+    -webkit-flex: 0 0 auto;
+    flex: 0 0 auto;
+}
+
+.switch input {
+    position: absolute;
+
+    opacity: 0;
+}
+
+.slider {
+    position: absolute;
+
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+
+    border-radius: 32px;
+
+    background: #bbb;
+
+    cursor: pointer;
+}
+
+.slider:before {
+    content: "";
+
+    position: absolute;
+
+    width: 26px;
+    height: 26px;
+
+    left: 3px;
+    bottom: 3px;
+
+    border-radius: 50%;
+
+    background: #fff;
+
+    -webkit-transition: 0.15s;
+    transition: 0.15s;
+}
+
+.switch input:checked + .slider {
+    background: #2457a7;
+}
+
+.switch input:checked + .slider:before {
+    -webkit-transform: translateX(26px);
+    transform: translateX(26px);
+}
+
+
+/*
+ * Fixed / random selection
+ */
+.selection-mode {
+    margin-top: 22px;
+    padding-top: 20px;
+
+    border-top: 1px solid #e3e3e3;
+}
+
+.selection-mode h3 {
+    margin: 0 0 12px;
+}
+
+.mode-option {
+    display: -webkit-flex;
+    display: flex;
+
+    -webkit-align-items: flex-start;
+    align-items: flex-start;
+
+    gap: 12px;
+
+    margin: 10px 0;
+    padding: 12px;
+
+    border: 1px solid #ddd;
+    border-radius: 9px;
+
+    cursor: pointer;
+}
+
+.mode-option input {
+    margin-top: 4px;
+
+    width: 20px;
+    height: 20px;
+
+    -webkit-flex: 0 0 auto;
+    flex: 0 0 auto;
+}
+
+.mode-option strong,
+.mode-option small {
+    display: block;
+}
+
+.mode-option small {
+    margin-top: 4px;
+
+    color: #666;
+
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.mode-status {
+    min-height: 20px;
+
+    margin-top: 10px;
+
+    color: #287a3d;
+
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.mode-status.error {
+    color: #b3261e;
+}
+
+
+/*
+ * Fixed background slots
+ */
+.slots {
+    text-align: left;
+}
+
+.slot {
+    display: inline-block;
+
+    width: 31.7%;
+
+    margin-right: 2%;
+    padding: 12px;
+
+    vertical-align: top;
+
+    background: #f8f8f8;
+
+    border: 1px solid #ddd;
+    border-radius: 10px;
+}
+
+.slot:last-child {
+    margin-right: 0;
+}
+
+.slot h3 {
+    margin: 0 0 10px;
+}
+
+.slot img {
+    display: block;
+
+    width: 100%;
+    height: auto;
+
+    border-radius: 7px;
+
+    background: #ddd;
+}
+
+.slot div {
+    margin-top: 8px;
+
+    overflow-wrap: anywhere;
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.random-background-section {
+    border-left: 5px solid #2457a7;
+}
+
+.random-background-section p:last-child {
+    margin-bottom: 0;
+}
+
+
+/*
+ * Heading used above libraries
+ */
+.section-heading {
+    display: -webkit-flex;
+    display: flex;
+
+    -webkit-align-items: center;
+    align-items: center;
+
+    -webkit-justify-content: space-between;
+    justify-content: space-between;
+
+    gap: 15px;
+
+    margin-bottom: 15px;
+}
+
+.section-heading h2 {
+    margin-bottom: 4px;
+}
+
+.section-heading p {
+    margin: 0;
+
+    color: #666;
+}
+
+.library-count {
+    padding: 7px 11px;
+
+    border-radius: 999px;
+
+    background: #e7e9ee;
+
+    white-space: nowrap;
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+
+/*
+ * Upload
+ */
+form {
+    display: -webkit-flex;
+    display: flex;
+
+    -webkit-align-items: center;
+    align-items: center;
+
+    -webkit-flex-wrap: wrap;
+    flex-wrap: wrap;
+
+    gap: 10px;
+}
+
+form button,
+.dialog-actions button {
+    padding: 10px 16px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: #2457a7;
+    color: #fff;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.dialog-actions button.secondary {
+    background: #e7e9ee;
+    color: #202124;
+}
+
+.status-message {
+    min-height: 20px;
+
+    margin-top: 10px;
+
+    color: #555;
+
+    font-size: 13px;
+}
+
+
+/*
+ * Image libraries.
+ *
+ * Inline-block is deliberately used instead of CSS Grid
+ * for compatibility with the old iPad.
+ */
+.library {
+    margin: -6px;
+}
+
+.library-item-wrapper {
+    position: relative;
+
+    display: inline-block;
+
+    width: 24%;
+
+    margin: 0.5%;
+    padding: 6px;
+
+    vertical-align: top;
+
+    border: 2px solid transparent;
+    border-radius: 10px;
+
+    background: #f6f6f6;
+}
+
+.library-item-wrapper.active-library-item {
+    border-color: #2457a7;
+}
+
+.library-item-wrapper.random-pool-item {
+    border-color: #6b8e23;
+}
+
+.library-item {
+    display: block;
+
+    width: 100%;
+
+    padding: 0;
+
+    border: none;
+
+    background: transparent;
+    color: #202124;
+
+    text-align: left;
+
+    cursor: pointer;
+}
+
+.random-pool-item .library-item {
+    cursor: default;
+}
+
+.library-item img {
+    display: block;
+
+    width: 100%;
+    height: auto;
+
+    border-radius: 6px;
+
+    background: #ddd;
+}
+
+.library-item span {
+    display: block;
+
+    padding: 7px 2px 3px;
+
+    overflow-wrap: anywhere;
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.active-badge,
+.pool-badge {
+    position: absolute;
+
+    top: 12px;
+    left: 12px;
+
+    padding: 4px 7px;
+
+    border-radius: 5px;
+
+    color: #fff;
+
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.active-badge {
+    background: #2457a7;
+}
+
+.pool-badge {
+    background: #58751c;
+}
+
+.delete-library-item {
+    width: 100%;
+
+    margin-top: 5px;
+    padding: 7px;
+
+    border: none;
+    border-radius: 6px;
+
+    background: #eee;
+    color: #8b1d18;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.delete-library-item:disabled {
+    color: #999;
+
+    cursor: default;
+}
+
+
+/*
+ * Logo area
+ */
+.logo-management {
+    margin-bottom: 22px;
+}
+
+.active-logo,
+.logo-upload {
+    display: inline-block;
+
+    width: 48%;
+
+    margin-right: 3%;
+
+    vertical-align: top;
+}
+
+.logo-upload {
+    margin-right: 0;
+}
+
+.logo-preview {
+    max-width: 320px;
+
+    padding: 12px;
+
+    border: 1px solid #ddd;
+    border-radius: 8px;
+
+    background: #fafafa;
+}
+
+.logo-preview img {
+    display: block;
+
+    max-width: 100%;
+    height: auto;
+
+    margin: 0 auto;
+}
+
+#active-logo-status {
+    margin-top: 8px;
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+/*
+ * Selection dialog
+ */
+#selection-dialog {
+    width: 90%;
+    max-width: 620px;
+
+    padding: 0;
+
+    border: none;
+    border-radius: 12px;
+
+    background: #fff;
+
+    box-shadow:
+        0 8px 35px
+        rgba(0, 0, 0, 0.3);
+}
+
+#selection-dialog::backdrop {
+    background:
+        rgba(0, 0, 0, 0.65);
+}
+
+.dialog-content {
+    padding: 20px;
+}
+
+.dialog-content h2 {
+    margin-top: 0;
+
+    overflow-wrap: anywhere;
+}
+
+#selection-preview {
+    display: block;
+
+    width: 100%;
+    height: auto;
+
+    margin-bottom: 16px;
+
+    border-radius: 8px;
+}
+
+.dialog-actions {
+    display: -webkit-flex;
+    display: flex;
+
+    -webkit-flex-wrap: wrap;
+    flex-wrap: wrap;
+
+    gap: 8px;
+}
+
+
+/*
+ * Generic utility
+ */
+.hidden {
+    display: none !important;
+}
+
+
+/*
+ * Tablet / iPad.
+ */
+@media (max-width: 900px) {
+
+    body {
+        padding: 18px;
+    }
+
+    main {
+        max-width: none;
+    }
+
+    .library-item-wrapper {
+        width: 32%;
+        margin: 0.66%;
+    }
+
+    .slot {
+        width: 32%;
+        margin-right: 1%;
+    }
+}
+
+
+/*
+ * Small screens.
+ */
 @media (max-width: 600px) {
-    .admin-nav {
-        display: block;
+
+    body {
+        padding: 12px;
+    }
+
+    header h1 {
+        font-size: 25px;
     }
 
     .admin-nav a {
         display: block;
 
-        margin-bottom: 8px;
+        margin-right: 0;
 
         text-align: center;
+    }
+
+    .greenscreen-main,
+    .section-heading {
+        display: block;
+    }
+
+    .switch {
+        margin-top: 14px;
+    }
+
+    .library-count {
+        display: inline-block;
+
+        margin-top: 10px;
+    }
+
+    .slot {
+        display: block;
+
+        width: 100%;
+
+        margin: 0 0 12px;
+    }
+
+    .library-item-wrapper {
+        width: 48%;
+        margin: 1%;
+    }
+
+    .active-logo,
+    .logo-upload {
+        display: block;
+
+        width: 100%;
+
+        margin: 0 0 20px;
+    }
+
+    form {
+        display: block;
+    }
+
+    form input,
+    form button {
+        display: block;
+
+        width: 100%;
+
+        margin-bottom: 10px;
     }
 }

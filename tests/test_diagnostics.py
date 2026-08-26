@@ -7,6 +7,9 @@ from app.services.session_manager import SessionManager
 from app.services.collage import CollageGenerator
 from app.core.events import EventBus
 from app.services.background import BackgroundProcessor
+from app.services.background_library import (
+    BackgroundLibraryService,
+)
 
 class FakePrintService:
     """Minimal print service for photo session tests."""
@@ -23,17 +26,26 @@ def test_diagnostic_snapshot(
     camera = CameraService()
 
     session_manager = SessionManager()
-
+    background_library_service = (
+        BackgroundLibraryService(
+            background_directory=(
+                tmp_path / "backgrounds"
+            ),
+        )
+    )
     photo_session_service = PhotoSessionService(
-         session_manager=session_manager,
-         camera_service=camera,
-         collage_generator=CollageGenerator(),
-         background_processor=BackgroundProcessor(),
-         print_service=FakePrintService(),  # type: ignore[arg-type]
-         event_bus=EventBus(),
-         session_root=tmp_path,
-         background_enabled=False,
-         background_images=(),
+        session_manager=session_manager,
+        camera_service=camera,
+        collage_generator=CollageGenerator(),
+        background_processor=BackgroundProcessor(),
+        background_library_service=(
+            background_library_service
+        ),
+        print_service=FakePrintService(),  # type: ignore[arg-type]
+        event_bus=EventBus(),
+        session_root=tmp_path,
+        background_enabled=False,
+        background_images=(),
     )
 
     diagnostics = DiagnosticService(
@@ -71,12 +83,21 @@ def test_diagnostic_log_lines(
 
     camera = CameraService()
     session_manager = SessionManager()
-
+    background_library_service = (
+        BackgroundLibraryService(
+            background_directory=(
+                tmp_path / "backgrounds"
+            ),
+        )
+    )
     photo_session_service = PhotoSessionService(
         session_manager=session_manager,
         camera_service=camera,
         collage_generator=CollageGenerator(),
         background_processor=BackgroundProcessor(),
+        background_library_service=(
+            background_library_service
+        ),
         print_service=FakePrintService(),  # type: ignore[arg-type]
         event_bus=EventBus(),
         session_root=tmp_path,

@@ -3,6 +3,21 @@ var library =
         "background-library"
     );
 
+var libraryTitle =
+    document.getElementById(
+        "library-title"
+    );
+
+var libraryDescription =
+    document.getElementById(
+        "library-description"
+    );
+
+var libraryCount =
+    document.getElementById(
+        "library-count"
+    );
+
 var uploadForm =
     document.getElementById(
         "upload-form"
@@ -73,14 +88,44 @@ var greenscreenEnabled =
         "greenscreen-enabled"
     );
 
+var selectionModeFixed =
+    document.getElementById(
+        "selection-mode-fixed"
+    );
+
+var selectionModeRandom =
+    document.getElementById(
+        "selection-mode-random"
+    );
+
+var selectionModeStatus =
+    document.getElementById(
+        "selection-mode-status"
+    );
+
+var fixedBackgroundSection =
+    document.getElementById(
+        "fixed-background-section"
+    );
+
+var randomBackgroundSection =
+    document.getElementById(
+        "random-background-section"
+    );
+
 
 var selectedFilename = null;
 var activeBackgrounds = {};
 var activeLogo = null;
+var currentSelectionMode = "fixed";
+var availableBackgroundCount = 0;
 
 
 /*
- * Generic JSON request helper for iOS 9.
+ * Generic JSON request helper.
+ *
+ * Deliberately implemented without fetch/async/await so that
+ * the administration page also works on the old iPad.
  */
 function requestJson(
     method,
@@ -358,8 +403,7 @@ function refreshSlot(
 
 
 /*
- * Native <dialog> is not available reliably
- * on Safari / iOS 9.
+ * Native <dialog> is not available reliably on old Safari.
  */
 function showSelectionDialog() {
     if (
@@ -403,6 +447,12 @@ function closeSelectionDialog() {
 function openSelection(
     filename
 ) {
+    if (
+        currentSelectionMode !== "fixed"
+    ) {
+        return;
+    }
+
     selectedFilename =
         filename;
 
@@ -418,16 +468,79 @@ function openSelection(
 }
 
 
-function refreshActiveLogo() {
-    activeLogoImage.src =
-        "/active-logo?v="
-        + Date.now();
+function showModeStatus(
+    text,
+    isError
+) {
+    selectionModeStatus.textContent =
+        text;
 
-    activeLogoImage.style.display =
-        "block";
+    selectionModeStatus.className =
+        "mode-status";
 
-    activeLogoStatus.textContent =
-        "Aktives Logo";
+    if (isError) {
+        selectionModeStatus.className +=
+            " error";
+    }
+}
+
+
+function updateModeDisplay() {
+    var isRandom =
+        currentSelectionMode === "random";
+
+    selectionModeFixed.checked =
+        !isRandom;
+
+    selectionModeRandom.checked =
+        isRandom;
+
+    if (isRandom) {
+        fixedBackgroundSection.className =
+            "fixed-background-section hidden";
+
+        randomBackgroundSection.className =
+            "random-background-section";
+
+        libraryTitle.textContent =
+            "Zufallspool";
+
+        libraryDescription.textContent =
+            "Alle Motive dieser Bibliothek können "
+            + "zufällig verwendet werden.";
+    } else {
+        fixedBackgroundSection.className =
+            "fixed-background-section";
+
+        randomBackgroundSection.className =
+            "random-background-section hidden";
+
+        libraryTitle.textContent =
+            "Hintergrund-Bibliothek";
+
+        libraryDescription.textContent =
+            "Motiv antippen, um es einem Foto "
+            + "fest zuzuordnen.";
+    }
+}
+
+
+function saveBackgroundSettings(
+    enabled,
+    selectionMode,
+    success,
+    failure
+) {
+    requestJson(
+        "POST",
+        "/api/admin/backgrounds/settings",
+        {
+            enabled: enabled,
+            selection_mode: selectionMode
+        },
+        success,
+        failure
+    );
 }
 
 
@@ -441,10 +554,41 @@ function loadBackgroundSettings() {
         function (data) {
             greenscreenEnabled.checked =
                 data.enabled === true;
+
+            currentSelectionMode =
+                data.selection_mode
+                || "fixed";
+
+            updateModeDisplay();
+
+            if (
+                currentSelectionMode === "random"
+                && availableBackgroundCount < 3
+            ) {
+                showModeStatus(
+                    "Achtung: Für die Zufallsauswahl "
+                    + "werden mindestens drei "
+                    + "Hintergrundbilder benötigt.",
+                    true
+                );
+            } else {
+                showModeStatus(
+                    ""
+                );
+            }
+
+            loadLibrary();
         },
 
         function () {
-            /* Keep current UI state. */
+            /*
+             * Keep usable defaults if the status
+             * endpoint cannot be loaded.
+             */
+            currentSelectionMode =
+                "fixed";
+
+            updateModeDisplay();
         }
     );
 }
@@ -456,12 +600,9 @@ greenscreenEnabled.addEventListener(
         var enabled =
             greenscreenEnabled.checked;
 
-        requestJson(
-            "POST",
-            "/api/admin/backgrounds/settings",
-            {
-                enabled: enabled
-            },
+        saveBackgroundSettings(
+            enabled,
+            currentSelectionMode,
 
             function (data) {
                 greenscreenEnabled.checked =
@@ -483,6 +624,109 @@ greenscreenEnabled.addEventListener(
 );
 
 
+function changeSelectionMode(
+    newMode
+) {
+    if (
+        newMode === "random"
+        && availableBackgroundCount < 3
+    ) {
+        selectionModeFixed.checked =
+            true;
+
+        selectionModeRandom.checked =
+            false;
+
+        showModeStatus(
+            "Für die Zufallsauswahl müssen "
+            + "mindestens drei Hintergrundbilder "
+            + "vorhanden sein.",
+            true
+        );
+
+        return;
+    }
+
+    var oldMode =
+        currentSelectionMode;
+
+    saveBackgroundSettings(
+        greenscreenEnabled.checked,
+        newMode,
+
+        function (data) {
+            currentSelectionMode =
+                data.selection_mode
+                || newMode;
+
+            showModeStatus(
+                currentSelectionMode === "random"
+                ? "Zufallsauswahl ist aktiv."
+                : "Feste Zuordnung ist aktiv."
+            );
+
+            updateModeDisplay();
+            loadLibrary();
+        },
+
+        function (error) {
+            currentSelectionMode =
+                oldMode;
+
+            updateModeDisplay();
+
+            showModeStatus(
+                "Auswahlmodus konnte nicht "
+                + "geändert werden: "
+                + error,
+                true
+            );
+        }
+    );
+}
+
+
+selectionModeFixed.addEventListener(
+    "change",
+    function () {
+        if (
+            selectionModeFixed.checked
+        ) {
+            changeSelectionMode(
+                "fixed"
+            );
+        }
+    }
+);
+
+
+selectionModeRandom.addEventListener(
+    "change",
+    function () {
+        if (
+            selectionModeRandom.checked
+        ) {
+            changeSelectionMode(
+                "random"
+            );
+        }
+    }
+);
+
+
+function refreshActiveLogo() {
+    activeLogoImage.src =
+        "/active-logo?v="
+        + Date.now();
+
+    activeLogoImage.style.display =
+        "block";
+
+    activeLogoStatus.textContent =
+        "Aktives Logo";
+}
+
+
 function selectLogo(
     filename
 ) {
@@ -494,6 +738,9 @@ function selectLogo(
         },
 
         function () {
+            activeLogo =
+                filename;
+
             refreshActiveLogo();
             loadLogoLibrary();
         },
@@ -791,6 +1038,19 @@ function loadLibrary() {
             activeBackgrounds =
                 data.active || {};
 
+            availableBackgroundCount =
+                data.items
+                ? data.items.length
+                : 0;
+
+            libraryCount.textContent =
+                availableBackgroundCount
+                + (
+                    availableBackgroundCount === 1
+                    ? " Motiv"
+                    : " Motive"
+                );
+
             while (
                 library.firstChild
             ) {
@@ -818,6 +1078,17 @@ function loadLibrary() {
             ) {
                 createBackgroundItem(
                     data.items[i]
+                );
+            }
+
+            if (
+                currentSelectionMode === "random"
+                && availableBackgroundCount < 3
+            ) {
+                showModeStatus(
+                    "Achtung: Es sind weniger als drei "
+                    + "Hintergrundbilder vorhanden.",
+                    true
                 );
             }
         },
@@ -890,35 +1161,67 @@ function createBackgroundItem(
     var isActive =
         activeSlots.length > 0;
 
-    if (isActive) {
+    if (
+        currentSelectionMode === "random"
+    ) {
         item.className +=
-            " active-library-item";
+            " random-pool-item";
 
-        var badge =
+        var poolBadge =
             document.createElement(
                 "div"
             );
 
-        badge.className =
-            "active-badge";
+        poolBadge.className =
+            "pool-badge";
 
-        badge.textContent =
-            "AKTIV: Foto "
-            + activeSlots.join(
-                ", "
-            );
+        poolBadge.textContent =
+            "ZUFALLSPOOL";
 
         item.appendChild(
-            badge
+            poolBadge
         );
-    }
 
-    selectButton.onclick =
-        function () {
-            openSelection(
-                filename
+        /*
+         * In random mode there is no individual slot
+         * assignment. The complete library is the pool.
+         */
+        selectButton.onclick =
+            function () {
+                return false;
+            };
+
+    } else {
+        if (isActive) {
+            item.className +=
+                " active-library-item";
+
+            var badge =
+                document.createElement(
+                    "div"
+                );
+
+            badge.className =
+                "active-badge";
+
+            badge.textContent =
+                "AKTIV: Foto "
+                + activeSlots.join(
+                    ", "
+                );
+
+            item.appendChild(
+                badge
             );
-        };
+        }
+
+        selectButton.onclick =
+            function () {
+                openSelection(
+                    filename
+                );
+            };
+    }
 
     var deleteButton =
         document.createElement(
@@ -934,12 +1237,17 @@ function createBackgroundItem(
     deleteButton.textContent =
         "Löschen";
 
+    /*
+     * The backend currently protects backgrounds that
+     * are used by one of the fixed slots. Keep the same
+     * rule in the UI, even while random mode is active.
+     */
     deleteButton.disabled =
         isActive;
 
     if (isActive) {
         deleteButton.title =
-            "Ein verwendeter Hintergrund "
+            "Ein fest zugeordneter Hintergrund "
             + "kann nicht gelöscht werden.";
     }
 
@@ -967,7 +1275,10 @@ function createBackgroundItem(
 function selectBackground(
     slot
 ) {
-    if (!selectedFilename) {
+    if (
+        !selectedFilename
+        || currentSelectionMode !== "fixed"
+    ) {
         return;
     }
 
@@ -981,6 +1292,10 @@ function selectBackground(
         },
 
         function () {
+            activeBackgrounds[
+                String(slot)
+            ] = selectedFilename;
+
             refreshSlot(
                 slot,
                 selectedFilename
@@ -1112,6 +1427,9 @@ uploadForm.onsubmit =
 
 /*
  * Initial load.
+ *
+ * First load the library so that the random-mode
+ * minimum of three images can be evaluated.
  */
 loadLibrary();
 loadLogoLibrary();

@@ -52,6 +52,7 @@ class LogoSelection(BaseModel):
 
 class BackgroundModeUpdate(BaseModel):
     enabled: bool
+    selection_mode: str
 
 class GreenscreenSettingsUpdate(
     BaseModel
@@ -429,13 +430,17 @@ def select_background(
 @router.get(
     "/backgrounds/settings"
 )
-def background_settings() -> dict[str, bool]:
+def background_settings() -> dict:
     """Return current virtual background state."""
 
     return {
         "enabled": (
             photo_session_service
             .backgrounds_enabled
+        ),
+        "selection_mode": (
+            photo_session_service
+            .background_selection
         ),
     }
 
@@ -445,17 +450,32 @@ def background_settings() -> dict[str, bool]:
 )
 def update_background_settings(
     update: BackgroundModeUpdate,
-) -> dict[str, bool]:
-    """Enable or disable virtual backgrounds."""
+) -> dict:
+    """Update virtual background settings."""
 
-    photo_session_service.set_backgrounds_enabled(
-        update.enabled
-    )
+    try:
+        photo_session_service.set_backgrounds_enabled(
+            update.enabled
+        )
+
+        photo_session_service.set_background_selection_mode(
+            update.selection_mode
+        )
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
 
     return {
         "enabled": (
             photo_session_service
             .backgrounds_enabled
+        ),
+        "selection_mode": (
+            photo_session_service
+            .background_selection
         ),
     }
 

@@ -1,4 +1,5 @@
 from pathlib import Path
+from PIL import Image
 
 import pytest
 from PIL import Image
@@ -16,6 +17,10 @@ from app.services.session_manager import (
     SessionManager,
 )
 from app.services.background import BackgroundProcessor
+
+from app.services.background_library import (
+    BackgroundLibraryService,
+)
 
 class FakePrintService:
     """Minimal print service for photo session tests."""
@@ -64,17 +69,26 @@ async def test_capture_and_collage_sequence(
         width=1800,
         height=1200,
     )
-
+    background_library_service = (
+        BackgroundLibraryService(
+            background_directory=(
+                tmp_path / "backgrounds"
+            ),
+        )
+    )
     service = PhotoSessionService(
         session_manager=manager,
         camera_service=camera,  # type: ignore[arg-type]
         collage_generator=collage_generator,
         background_processor=BackgroundProcessor(),
+        background_library_service=(
+            background_library_service
+        ),
         print_service=FakePrintService(),  # type: ignore[arg-type]
         event_bus=EventBus(),
         session_root=tmp_path,
         logo_path=(
-            tmp_path / "missing-logo.png"    
+            tmp_path / "missing-logo.png"
         ),
         background_enabled=False,
         background_images=(),
@@ -82,7 +96,6 @@ async def test_capture_and_collage_sequence(
         photo_count=3,
         interval_seconds=0,
     )
-
     manager.handle(
         SessionCommand.START_SESSION
     )
@@ -133,3 +146,67 @@ async def test_capture_and_collage_sequence(
         1200,
     )
 
+def test_random_background_selection(
+    tmp_path: Path,
+) -> None:
+    background_directory = (
+        tmp_path / "backgrounds"
+    )
+
+    library_service = (
+        BackgroundLibraryService(
+            background_directory=(
+                background_directory
+            ),
+        )
+    )
+
+    for index in range(1, 4):
+        image_path = (
+            library_service.library_directory
+            / f"background-{index}.jpg"
+        )
+
+        image = Image.new(
+            "RGB",
+            (100, 100),
+            (
+                index * 40,
+                index * 40,
+                index * 40,
+            ),
+        )
+
+        image.save(
+            image_path,
+            format="JPEG",
+        )
+
+    service = PhotoSessionService(
+        session_manager=SessionManager(),
+        camera_service=FakeCamera(),  # type: ignore[arg-type]
+        collage_generator=CollageGenerator(),
+        background_processor=BackgroundProcessor(),
+        background_library_service=(
+            library_service
+        ),
+        print_service=FakePrintService(),  # type: ignore[arg-type]
+        event_bus=EventBus(),
+        session_root=tmp_path,
+        background_enabled=True,
+        background_selection_mode="random",
+        background_images=(),
+    )
+
+    selected = service._select_backgrounds(
+        3
+    )
+
+    assert len(selected) == 3
+    assert len(set(selected)) == 3
+
+    assert all(
+        path.parent
+        == library_service.library_directory
+        for path in selected
+    )

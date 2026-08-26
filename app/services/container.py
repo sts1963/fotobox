@@ -128,6 +128,12 @@ photo_session_service = PhotoSessionService(
     logo_path=settings.collage.logo,
     background_enabled=settings.background.enabled,
     background_images=settings.background.images,
+    background_library_service=(
+        background_library_service
+    ),
+    background_selection_mode=(
+        settings.background.selection_mode
+    ),
     countdown_seconds=(
         settings.session.countdown_seconds
     ),

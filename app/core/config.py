@@ -59,6 +59,7 @@ class GreenscreenSettings:
 class BackgroundSettings:
     enabled: bool
     mode: str
+    selection_mode: str
     images: tuple[Path, ...]
     greenscreen: GreenscreenSettings
 
@@ -237,6 +238,12 @@ def load_settings(
                 mode=str(
                     background["mode"]
                 ),
+                selection_mode=str(
+                    background.get(
+                        "selection_mode",
+                        "fixed",
+                    )
+                ),
                 images=tuple(
                     _project_path(
                         str(image_path)
@@ -369,10 +376,23 @@ def _validate_settings(
             "background.mode must currently be 'greenscreen'."
         )
 
-    if settings.background.enabled:
+    if settings.background.selection_mode not in (
+        "fixed",
+        "random",
+    ):
+        raise ConfigurationError(
+            "background.selection_mode must be "
+            "'fixed' or 'random'."
+        )
+
+    if (
+        settings.background.enabled
+        and settings.background.selection_mode == "fixed"
+    ):
         if len(settings.background.images) != 3:
             raise ConfigurationError(
-                "Exactly three background images are required."
+                "Exactly three background images are required "
+                "for fixed selection."
             )
 
     gs = settings.background.greenscreen
