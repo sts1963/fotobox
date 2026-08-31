@@ -1,26 +1,13 @@
 <!DOCTYPE html>
 <html lang="de">
-
 <head>
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fotobox Sessions</title>
-
-    <link
-        rel="stylesheet"
-        href="/static/css/sessions.css?v=2"
-    >
+    <link rel="stylesheet" href="/static/css/sessions.css?v=3">
 </head>
-
 <body>
-
 <main class="admin-page">
-
     <header>
         <div>
             <h1>Fotobox</h1>
@@ -29,84 +16,46 @@
     </header>
 
     <nav class="admin-nav">
-        <a href="/">
-            Fotobox
-        </a>
-
-        <a href="/console">
-            Konsole
-        </a>
-
-        <a href="/backgrounds">
-            Gestaltung
-        </a>
-
-        <a href="/settings">
-            Einstellungen
-        </a>
-
-        <a
-            href="/sessions"
-            class="active"
-        >
-            Sessions
-        </a>
+        <a href="/">Fotobox</a>
+        <a href="/console">Konsole</a>
+        <a href="/backgrounds">Gestaltung</a>
+        <a href="/settings">Einstellungen</a>
+        <a href="/sessions" class="active">Sessions</a>
     </nav>
 
     <section class="summary-grid">
-
         <article class="summary-card">
             <span>Sessions</span>
             <strong id="session-count">–</strong>
         </article>
-
         <article class="summary-card">
             <span>Collagen</span>
             <strong id="collage-count">–</strong>
         </article>
-
         <article class="summary-card">
             <span>Speicher</span>
             <strong id="archive-size">–</strong>
         </article>
-
         <article class="summary-card">
             <span>Neueste Session</span>
             <strong id="newest-session">–</strong>
         </article>
-
     </section>
 
     <section class="archive-actions">
-
-        <a
-            class="download-button"
-            href="/api/admin/sessions/collages.zip"
-        >
+        <a class="download-button" href="/api/admin/sessions/collages.zip">
             Alle Collagen als ZIP laden
         </a>
-
-<button
-    id="delete-all-button"
-    class="delete-all-button"
-    type="button"
->
-    Alle alten Sessions löschen
-</button>
-
+        <button id="delete-all-button" class="delete-all-button" type="button">
+            Alle alten Sessions löschen
+        </button>
     </section>
 
     <section>
         <h2>Gespeicherte Sessions</h2>
-
-        <div id="session-list">
-            Wird geladen …
-        </div>
+        <div id="session-list">Wird geladen …</div>
     </section>
-
 </main>
-
-<script src="/static/js/sessions.js?v=2"></script>
-
+<script src="/static/js/sessions.js?v=3"></script>
 </body>
 </html>

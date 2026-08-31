@@ -757,6 +757,48 @@ def admin_session_collage(
         },
     )
 
+@router.post(
+    "/sessions/{session_id}/print"
+)
+def print_archived_session(
+    session_id: str,
+) -> dict[str, str]:
+    """Print the collage of one archived session."""
+
+    try:
+        collage_path = (
+            session_archive_service
+            .get_collage_path(
+                session_id
+            )
+        )
+
+        job = (
+            print_service
+            .print_collage(
+                collage_path
+            )
+        )
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    logger.info(
+        "Archived session collage submitted "
+        "for printing: session_id=%s job=%s",
+        session_id,
+        job,
+    )
+
+    return {
+        "status": "submitted",
+        "session_id": session_id,
+        "job": job,
+    }
+
 
 @router.delete(
     "/sessions/{session_id}"
