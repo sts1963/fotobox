@@ -23,6 +23,8 @@ class PrintService:
         self.printer_name = printer_name
         self.enabled = enabled
 
+        self._recovery_error: str | None = None
+
     def get_status(self) -> dict:
         """Return the current physical and CUPS printer status."""
 
@@ -34,12 +36,64 @@ class PrintService:
                 "message": "Printing is disabled.",
             }
 
-        #
-        # First check whether the physical SELPHY CP510
-        # is currently visible on USB.
-        #
+        usb_status = self._check_usb()
+
+        if not usb_status["available"]:
+            return usb_status
+
+        cups_status = self._get_cups_status()
+
+        if cups_status["disabled"]:
+            error_state = cups_status["message"]
+
+            if (
+                self._recovery_error
+                != error_state
+            ):
+                self._recovery_error = (
+                    error_state
+                )
+
+                logger.warning(
+                    "Printer queue disabled, "
+                    "attempting automatic recovery: %s",
+                    self.printer_name,
+                )
+
+                recovery = (
+                    self._recover_queue()
+                )
+
+                if recovery["success"]:
+                    cups_status = (
+                        self._get_cups_status()
+                    )
+
+                    if cups_status["ready"]:
+                        self._recovery_error = None
+
+                        cups_status["message"] = (
+                            "Printer queue recovered "
+                            "automatically."
+                        )
+
+        else:
+            self._recovery_error = None
+
+        return {
+            "enabled": True,
+            "available": True,
+            "ready": cups_status["ready"],
+            "message": cups_status["message"],
+        }
+
+    def _check_usb(
+        self,
+    ) -> dict:
+        """Check whether the SELPHY CP510 is visible on USB."""
+
         try:
-            usb_result = subprocess.run(
+            result = subprocess.run(
                 [
                     "lsusb",
                 ],
@@ -67,7 +121,7 @@ class PrintService:
                 ),
             }
 
-        if usb_result.returncode != 0:
+        if result.returncode != 0:
             return {
                 "enabled": True,
                 "available": False,
@@ -77,7 +131,9 @@ class PrintService:
                 ),
             }
 
-        usb_output = usb_result.stdout.lower()
+        usb_output = (
+            result.stdout.lower()
+        )
 
         printer_connected = (
             "04a9:3128" in usb_output
@@ -95,10 +151,20 @@ class PrintService:
                 ),
             }
 
-        #
-        # The physical printer exists.
-        # Now check the CUPS queue.
-        #
+        return {
+            "enabled": True,
+            "available": True,
+            "ready": True,
+            "message": (
+                "Canon SELPHY CP510 connected."
+            ),
+        }
+
+    def _get_cups_status(
+        self,
+    ) -> dict:
+        """Return the current CUPS queue status."""
+
         try:
             result = subprocess.run(
                 [
@@ -122,9 +188,8 @@ class PrintService:
             )
 
             return {
-                "enabled": True,
-                "available": True,
                 "ready": False,
+                "disabled": False,
                 "message": str(exc),
             }
 
@@ -136,25 +201,107 @@ class PrintService:
             )
 
             return {
-                "enabled": True,
-                "available": True,
                 "ready": False,
+                "disabled": False,
                 "message": message,
             }
 
         status = result.stdout.strip()
-        status_lower = status.lower()
+        status_lower = (
+            status.lower()
+        )
+
+        disabled = (
+            "disabled" in status_lower
+        )
 
         ready = (
             "enabled" in status_lower
-            and "disabled" not in status_lower
+            and not disabled
         )
 
         return {
-            "enabled": True,
-            "available": True,
             "ready": ready,
+            "disabled": disabled,
             "message": status,
+        }
+
+    def _recover_queue(
+        self,
+    ) -> dict:
+        """Discard failed jobs and re-enable the CUPS queue."""
+
+        commands = [
+            [
+                "cancel",
+                "-a",
+                self.printer_name,
+            ],
+            [
+                "cupsenable",
+                self.printer_name,
+            ],
+            [
+                "cupsaccept",
+                self.printer_name,
+            ],
+        ]
+
+        for command in commands:
+            try:
+                result = subprocess.run(
+                    command,
+                    capture_output=True,
+                    text=True,
+                    timeout=15,
+                )
+
+            except (
+                subprocess.TimeoutExpired,
+                OSError,
+            ) as exc:
+                logger.error(
+                    "Printer recovery command failed: "
+                    "command=%s error=%s",
+                    command,
+                    exc,
+                )
+
+                return {
+                    "success": False,
+                    "message": str(exc),
+                }
+
+            if result.returncode != 0:
+                message = (
+                    result.stderr.strip()
+                    or result.stdout.strip()
+                    or "Unknown CUPS error."
+                )
+
+                logger.error(
+                    "Printer recovery command failed: "
+                    "command=%s error=%s",
+                    command,
+                    message,
+                )
+
+                return {
+                    "success": False,
+                    "message": message,
+                }
+
+        logger.warning(
+            "Printer queue recovered: "
+            "printer=%s pending jobs discarded",
+            self.printer_name,
+        )
+
+        return {
+            "success": True,
+            "message": (
+                "Printer queue recovered."
+            ),
         }
 
     def print_collage(
@@ -244,7 +391,9 @@ class PrintService:
                 f"Unable to execute CUPS command: {exc}"
             ) from exc
 
-        job_info = result.stdout.strip()
+        job_info = (
+            result.stdout.strip()
+        )
 
         logger.info(
             "Print job submitted: "
