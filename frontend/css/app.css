@@ -578,3 +578,62 @@ header h1 {
     -webkit-transform: scale(1.08);
     transform: scale(1.08);
 }
+/*
+ * ---------------------------------------------------------
+ * Screen visibility
+ * ---------------------------------------------------------
+ *
+ * Keep this rule at the END of the stylesheet.
+ *
+ * Several legacy iPad / Safari compatibility rules above
+ * use ID selectors together with !important.  Therefore a
+ * plain ".hidden" rule is not sufficiently specific in all
+ * browsers.
+ *
+ * JavaScript controls the active Fotobox screen by adding
+ * and removing the "hidden" class.
+ */
+
+#start-screen.hidden,
+#countdown-screen.hidden,
+#capture-screen.hidden,
+#processing-screen.hidden,
+#preview-screen.hidden,
+#error-screen.hidden,
+.capture-photo-container.hidden,
+.next-photo-countdown.hidden {
+    display: none !important;
+}
+/*
+ * Desktop / modern browser layout for the countdown
+ * between photos.
+ *
+ * Keep the title above the counter instead of placing
+ * both elements in the same screen position.
+ */
+
+@media screen and (min-width: 800px) {
+
+    #capture-screen .session-message {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #capture-screen #capture-title {
+        margin: 0 0 2rem 0;
+    }
+
+    #capture-screen .next-photo-countdown {
+        position: static !important;
+
+        left: auto !important;
+        top: auto !important;
+
+        margin: 0 !important;
+
+        -webkit-transform: none !important;
+        transform: none !important;
+    }
+}
