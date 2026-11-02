@@ -171,6 +171,56 @@ class SessionArchiveService:
 
         return buffer.getvalue()
 
+
+    def create_original_photos_archive(
+        self,
+        session_ids: list[str],
+    ) -> bytes:
+        """Package unmodified source JPEGs from selected sessions."""
+
+        if not session_ids:
+            raise SessionArchiveError("No sessions selected.")
+        if len(session_ids) > 200:
+            raise SessionArchiveError("Too many sessions selected.")
+
+        root = self.session_root.resolve()
+        selected = []
+        for session_id in dict.fromkeys(session_ids):
+            if (
+                not session_id
+                or session_id in (".", "..")
+                or "/" in session_id
+                or "\\\\" in session_id
+            ):
+                raise SessionArchiveError("Invalid session ID.")
+
+            directory = (root / session_id).resolve()
+            if directory.parent != root or not directory.is_dir():
+                raise SessionArchiveError("Session not found: " + session_id)
+
+            photos = sorted(directory.glob("photo_*.jpg"))
+            photos = [
+                path for path in photos
+                if path.is_file() and path.resolve().parent == directory
+            ]
+            if not photos:
+                raise SessionArchiveError(
+                    "No original photos in session: " + session_id
+                )
+            selected.append((session_id, photos))
+
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(
+            buffer, mode="w", compression=zipfile.ZIP_STORED
+        ) as archive:
+            for session_id, photos in selected:
+                for photo in photos:
+                    archive.write(
+                        photo,
+                        arcname=session_id + "/" + photo.name,
+                    )
+        return buffer.getvalue()
+
     def _inspect_session(
         self,
         directory: Path,
