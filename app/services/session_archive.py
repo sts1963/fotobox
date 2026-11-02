@@ -171,6 +171,68 @@ class SessionArchiveService:
 
         return buffer.getvalue()
 
+
+    def create_original_photos_archive(
+        self,
+        session_ids: list[str],
+    ) -> bytes:
+        """Package original JPEGs and collages from selected sessions."""
+
+        if not session_ids:
+            raise SessionArchiveError("No sessions selected.")
+        if len(session_ids) > 200:
+            raise SessionArchiveError("Too many sessions selected.")
+
+        root = self.session_root.resolve()
+        selected = []
+        for session_id in dict.fromkeys(session_ids):
+            if (
+                not session_id
+                or session_id in (".", "..")
+                or "/" in session_id
+                or chr(92) in session_id
+            ):
+                raise SessionArchiveError("Invalid session ID.")
+
+            directory = (root / session_id).resolve()
+            if directory.parent != root or not directory.is_dir():
+                raise SessionArchiveError("Session not found: " + session_id)
+
+            photos = sorted(directory.glob("photo_*.jpg"))
+            photos = [
+                path for path in photos
+                if path.is_file() and path.resolve().parent == directory
+            ]
+            collage = directory / "collage.jpg"
+            if collage.is_file() and collage.resolve().parent == directory:
+                photos.append(collage)
+            if not photos:
+                raise SessionArchiveError(
+                    "No photos or collage in session: " + session_id
+                )
+            selected.append((session_id, photos))
+
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(
+            buffer, mode="w", compression=zipfile.ZIP_STORED
+        ) as archive:
+            for session_id, photos in selected:
+                for photo in photos:
+                    archive.write(
+                        photo,
+                        arcname=session_id + "/" + photo.name,
+                    )
+        return buffer.getvalue()
+
+    def create_all_sessions_archive(self) -> bytes:
+        """Package all sessions that contain photos or a collage."""
+        session_ids = [
+            session.session_id
+            for session in self.list_sessions()
+            if session.photo_count > 0 or session.has_collage
+        ]
+        return self.create_original_photos_archive(session_ids)
+
     def _inspect_session(
         self,
         directory: Path,

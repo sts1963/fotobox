@@ -28,6 +28,49 @@ var deleteAllButton =
         "delete-all-button"
     );
 
+var selectedSessions = {};
+var downloadSelectedButton = document.getElementById("download-selected-button");
+
+function updateSelectedButton() {
+    var count = Object.keys(selectedSessions).length;
+    downloadSelectedButton.disabled = count === 0;
+    downloadSelectedButton.textContent = count
+        ? "Fotos und Collagen laden (" + count + " Sessions)"
+        : "Fotos und Collagen der Auswahl laden";
+}
+
+downloadSelectedButton.onclick = function () {
+    var ids = Object.keys(selectedSessions);
+    if (!ids.length) { return; }
+    downloadSelectedButton.disabled = true;
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/admin/sessions/originals.zip", true);
+    xhr.responseType = "blob";
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.onload = function () {
+        updateSelectedButton();
+        if (xhr.status !== 200) {
+            window.alert("Download fehlgeschlagen (HTTP " + xhr.status + ").");
+            return;
+        }
+        var url = window.URL.createObjectURL(xhr.response);
+        var link = document.createElement("a");
+        link.href = url;
+        link.download = "fotobox-sessions-auswahl.zip";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.setTimeout(function () {
+            window.URL.revokeObjectURL(url);
+        }, 30000);
+    };
+    xhr.onerror = function () {
+        updateSelectedButton();
+        window.alert("Netzwerkfehler beim Download.");
+    };
+    xhr.send(JSON.stringify({session_ids: ids}));
+};
+
 function requestJson(method, url, success, failure) {
     var request = new XMLHttpRequest();
     request.open(method, url, true);
@@ -139,6 +182,8 @@ function printSession(sessionId, button, statusElement) {
 
 function renderSessions(items) {
     sessionList.innerHTML = "";
+    selectedSessions = {};
+    updateSelectedButton();
 
     if (!items.length) {
         sessionList.textContent = "Keine Sessions vorhanden.";
@@ -196,6 +241,26 @@ function renderSessions(items) {
 
             content.appendChild(info);
 
+            if (item.photo_count > 0 || item.has_collage) {
+                var selectionLabel = document.createElement("label");
+                selectionLabel.className = "session-selection";
+                var selectionBox = document.createElement("input");
+                selectionBox.type = "checkbox";
+                selectionBox.onchange = function () {
+                    if (selectionBox.checked) {
+                        selectedSessions[item.session_id] = true;
+                    } else {
+                        delete selectedSessions[item.session_id];
+                    }
+                    updateSelectedButton();
+                };
+                selectionLabel.appendChild(selectionBox);
+                selectionLabel.appendChild(
+                    document.createTextNode(" Für Sammeldownload auswählen")
+                );
+                content.appendChild(selectionLabel);
+            }
+
             var actions = document.createElement("div");
             actions.className = "session-actions";
 
@@ -224,6 +289,14 @@ function renderSessions(items) {
                 viewLink.target = "_blank";
                 viewLink.textContent = "Collage ansehen";
                 actions.appendChild(viewLink);
+            }
+
+            if (item.photo_count > 0) {
+                var originalsLink = document.createElement("a");
+                originalsLink.href = "/api/admin/sessions/"
+                    + encodeURIComponent(item.session_id) + "/originals.zip";
+                originalsLink.textContent = "Fotos und Collage ZIP";
+                actions.appendChild(originalsLink);
             }
 
             var deleteButton = document.createElement("button");

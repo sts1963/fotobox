@@ -42,6 +42,10 @@ router = APIRouter(
 )
 
 
+class OriginalPhotosSelection(BaseModel):
+    session_ids: list[str]
+
+
 class BackgroundSelection(BaseModel):
     filename: str
 
@@ -193,6 +197,73 @@ def download_collages() -> StreamingResponse:
             "Cache-Control": "no-store",
         },
     )
+
+
+@router.get("/sessions/all-photos.zip")
+def download_all_session_photos() -> StreamingResponse:
+    """Download all original photos and their collages."""
+    try:
+        archive_data = session_archive_service.create_all_sessions_archive()
+    except Exception as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    return StreamingResponse(
+        io.BytesIO(archive_data),
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": (
+                'attachment; filename="fotobox-alle-sessions.zip"'
+            ),
+            "Cache-Control": "no-store",
+        },
+    )
+
+
+@router.get("/sessions/{session_id}/originals.zip")
+def download_session_originals(session_id: str) -> StreamingResponse:
+    """Download original JPEGs and collage from one session."""
+    try:
+        archive_data = session_archive_service.create_original_photos_archive(
+            [session_id]
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    return StreamingResponse(
+        io.BytesIO(archive_data),
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": (
+                'attachment; filename="fotobox-session.zip"'
+            ),
+            "Cache-Control": "no-store",
+        },
+    )
+
+
+@router.post("/sessions/originals.zip")
+def download_selected_originals(
+    selection: OriginalPhotosSelection,
+) -> StreamingResponse:
+    """Download original JPEGs and collages from selected sessions."""
+    try:
+        archive_data = session_archive_service.create_original_photos_archive(
+            selection.session_ids
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return StreamingResponse(
+        io.BytesIO(archive_data),
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": (
+                'attachment; filename="fotobox-sessions-auswahl.zip"'
+            ),
+            "Cache-Control": "no-store",
+        },
+    )
+
 
 @router.post(
     "/printer/test"
