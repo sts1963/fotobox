@@ -199,9 +199,29 @@ def download_collages() -> StreamingResponse:
     )
 
 
+@router.get("/sessions/all-photos.zip")
+def download_all_session_photos() -> StreamingResponse:
+    """Download all original photos and their collages."""
+    try:
+        archive_data = session_archive_service.create_all_sessions_archive()
+    except Exception as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    return StreamingResponse(
+        io.BytesIO(archive_data),
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": (
+                'attachment; filename="fotobox-alle-sessions.zip"'
+            ),
+            "Cache-Control": "no-store",
+        },
+    )
+
+
 @router.get("/sessions/{session_id}/originals.zip")
 def download_session_originals(session_id: str) -> StreamingResponse:
-    """Download original JPEGs from one archived session."""
+    """Download original JPEGs and collage from one session."""
     try:
         archive_data = session_archive_service.create_original_photos_archive(
             [session_id]
@@ -214,7 +234,7 @@ def download_session_originals(session_id: str) -> StreamingResponse:
         media_type="application/zip",
         headers={
             "Content-Disposition": (
-                'attachment; filename="fotobox-originale.zip"'
+                'attachment; filename="fotobox-session.zip"'
             ),
             "Cache-Control": "no-store",
         },
@@ -225,7 +245,7 @@ def download_session_originals(session_id: str) -> StreamingResponse:
 def download_selected_originals(
     selection: OriginalPhotosSelection,
 ) -> StreamingResponse:
-    """Download original JPEGs from multiple selected sessions."""
+    """Download original JPEGs and collages from selected sessions."""
     try:
         archive_data = session_archive_service.create_original_photos_archive(
             selection.session_ids
@@ -238,7 +258,7 @@ def download_selected_originals(
         media_type="application/zip",
         headers={
             "Content-Disposition": (
-                'attachment; filename="fotobox-originale-auswahl.zip"'
+                'attachment; filename="fotobox-sessions-auswahl.zip"'
             ),
             "Cache-Control": "no-store",
         },
