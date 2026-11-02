@@ -35,8 +35,8 @@ function updateSelectedButton() {
     var count = Object.keys(selectedSessions).length;
     downloadSelectedButton.disabled = count === 0;
     downloadSelectedButton.textContent = count
-        ? "Originalfotos laden (" + count + " Sessions)"
-        : "Originalfotos der Auswahl laden";
+        ? "Fotos und Collagen laden (" + count + " Sessions)"
+        : "Fotos und Collagen der Auswahl laden";
 }
 
 downloadSelectedButton.onclick = function () {
@@ -56,7 +56,7 @@ downloadSelectedButton.onclick = function () {
         var url = window.URL.createObjectURL(xhr.response);
         var link = document.createElement("a");
         link.href = url;
-        link.download = "fotobox-originale-auswahl.zip";
+        link.download = "fotobox-sessions-auswahl.zip";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -241,7 +241,7 @@ function renderSessions(items) {
 
             content.appendChild(info);
 
-            if (item.photo_count > 0) {
+            if (item.photo_count > 0 || item.has_collage) {
                 var selectionLabel = document.createElement("label");
                 selectionLabel.className = "session-selection";
                 var selectionBox = document.createElement("input");
@@ -295,7 +295,7 @@ function renderSessions(items) {
                 var originalsLink = document.createElement("a");
                 originalsLink.href = "/api/admin/sessions/"
                     + encodeURIComponent(item.session_id) + "/originals.zip";
-                originalsLink.textContent = "Originalfotos ZIP";
+                originalsLink.textContent = "Fotos und Collage ZIP";
                 actions.appendChild(originalsLink);
             }
 
