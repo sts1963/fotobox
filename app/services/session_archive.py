@@ -190,7 +190,7 @@ class SessionArchiveService:
                 not session_id
                 or session_id in (".", "..")
                 or "/" in session_id
-                or "\\\\" in session_id
+                or chr(92) in session_id
             ):
                 raise SessionArchiveError("Invalid session ID.")
 
