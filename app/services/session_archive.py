@@ -176,7 +176,7 @@ class SessionArchiveService:
         self,
         session_ids: list[str],
     ) -> bytes:
-        """Package unmodified source JPEGs from selected sessions."""
+        """Package original JPEGs and collages from selected sessions."""
 
         if not session_ids:
             raise SessionArchiveError("No sessions selected.")
@@ -203,9 +203,12 @@ class SessionArchiveService:
                 path for path in photos
                 if path.is_file() and path.resolve().parent == directory
             ]
+            collage = directory / "collage.jpg"
+            if collage.is_file() and collage.resolve().parent == directory:
+                photos.append(collage)
             if not photos:
                 raise SessionArchiveError(
-                    "No original photos in session: " + session_id
+                    "No photos or collage in session: " + session_id
                 )
             selected.append((session_id, photos))
 
@@ -220,6 +223,15 @@ class SessionArchiveService:
                         arcname=session_id + "/" + photo.name,
                     )
         return buffer.getvalue()
+
+    def create_all_sessions_archive(self) -> bytes:
+        """Package all sessions that contain photos or a collage."""
+        session_ids = [
+            session.session_id
+            for session in self.list_sessions()
+            if session.photo_count > 0 or session.has_collage
+        ]
+        return self.create_original_photos_archive(session_ids)
 
     def _inspect_session(
         self,
